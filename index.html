@@ -1,0 +1,1927 @@
+<!---Main page html------------------------------------------------------------------------------------------------------>
+<html>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css" />
+	<script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/georaster"></script>
+    <script src="https://unpkg.com/chroma-js"></script>
+    <script src="https://unpkg.com/georaster-layer-for-leaflet"></script>
+    <head>
+        <title>LOCAETA Industrial Emissions and Decarbonization Data Explorer</title>
+    </head>
+
+    <body>
+       
+ <table>
+    <!--Title-->
+    <tr>
+        <td><div id="titleLogo" style="font-size:22px; font-family: Helvetica, sans-serif; margin-left: -30px; padding-left: 30px;">
+            <strong><i>LOCAETA</i> Data Explorer:</strong> Industrial Emissions and Decarbonization</div>
+        </td>
+        <td>
+        <div id="CSlogo" class="CSlogo">
+        <a href="https://www.carbonsolutionsllc.com/" target="_blank"><img src="Icons/cslogo.jpg" alt="Carbon Solutions Logo and Link" width="100"></a></span>
+        </div>
+
+        </td>
+        <td class="year-select">
+        <!--
+            <label for="year">Year:<div class="infoPopup" id="infoPopupHigh" onclick="showInfoPopup('info_Year')"><img src="Icons/info.svg" class="infoIcon">
+            <span class="popuptext" id="info_Year"></span>
+        </div></label>
+            <select name="year" id="year">
+                <option value="2017" disabled>2017</option>
+                <option value="2020" selected>2020</option>
+                <option value="2023" disabled>2023</option>
+            </select>
+<br> -->
+            <label for="toggleOptions">Layer Options:<div class="infoPopup" id="infoPopupMidHigh" onclick="showInfoPopup('info_layerOptions')"><img src="Icons/info.svg" class="infoIcon">
+        <span class="popuptext" id="info_layerOptions"></span>
+    </div></label>
+        <select name="layerOptions" id="layerOptions">
+            <option disabled selected><i>Select layer options</i></option>
+            <option value="toggleOff">Toggle all layers off</option>
+            <option value="healthEffects">Cancer risk and facilities</option>
+            <option value="allObservations">All 2020 PM data (satellite, in situ)</option>
+            <option value="compareDecarb">PM emissions with/without carbon capture</option>
+            <option value="allTransport">Transportation and diesel PM</option>
+        </select>
+</td>
+</tr>
+    <!--Map-->
+    <tr><td colspan=2>
+    <div id="mapWrapper" style="position: relative; border-width: 1px; border-style: solid; border-color: #4b4b4b;">
+        <div id="controls" style="background-color: white; position: absolute; bottom: 5px; left: 5px; z-index: 1;border-radius: 2px;">
+            <table>
+                <tr><td colspan=2>
+                    <table><tr>			
+                    <!-- Home button -->
+                    <td style="text-align:middle;"><div style="cursor: pointer; font-size: 16px;" onclick="mapHome()"><strong>Home</div></td>
+                    <td style="vertical-align:middle; font-size: 16px;">|</td>
+                    <!-- Basemap -->
+                    <td><div style="cursor: pointer; font-size: 16px;" onclick="toggleBasemap()"><strong>Basemap</div></td>
+                    </tr></table>
+                </td></tr>                      
+            </table>
+        </div>
+
+       
+        <div id="map" style="width: 953px; height: 900px; z-index: 0;"></div></td>
+    </div>
+
+    </td>
+
+    <!---Table containing legend and main menu; hides behind loading panel-->
+    <td>
+        <div id="tableWrapper">
+        <!--Loading Panel-->
+        <div id="loadingPanel" style="background-color: white; position: absolute; width: 100%; height: 760px;">
+            <div class="snippet" data-title=".dot-elastic">
+                <div class="stage">
+                <div class="dot-elastic"></div>
+                <div class="loadingTitle">Loading map data</div>
+                </div>
+            </div>
+        </div>
+
+        <!--Legend-->
+        <div id="legendPanel" class="legendWrapper">
+                <div class="legend"><strong>Map legend</strong>
+                <table id="legendEntries">
+                </table></div>
+        </div>
+
+        <!--Main Menu-->
+        <div style="display: inline-block; vertical-align: top;">
+            <table class="toggleLayout">
+                <tr>
+                <td class="panelLayoutShade">
+                <table width="100%" style="margin: 0px;">
+                    <tr><td colspan=5 align="center"><span style="font-size: 1.4em;">Air Quality</span></td></tr>
+
+                    <!--Row 0: Headers-->
+                    <tr><td colspan=2><div class="infoPopup" id="infoPopupVeryHigh" onclick="showInfoPopup('info_PM25')"><b><i>PM<sub>2.5</sub> observations (annual):</b></i><img src="Icons/info.svg" class="infoIcon">
+                        <span class="popuptext" id="info_PM25"></span>
+                    </div></td>
+
+                    <td><div class="infoPopup" id="infoPopupVeryHighRight" onclick="showInfoPopup('info_AQI')"><b><i>Annual AQI:</b></i><img src="Icons/info.svg" class="infoIcon">
+                        <span class="popuptext" id="info_AQI"></span>
+                    </div></td></tr>
+
+                    <!--Row 1-->
+                    <tr>
+                    <td colspan=2><table><tr><td>
+                        <label class="switch">
+                        <input type="checkbox" name="satellitePM25" onchange="activateLayer('satellitePM25')">
+                        <span class="slider round"></span>
+                        </label></td><td class="horizSpace"><div class="infoPopup" id="infoPopupHigh"onclick="showInfoPopup('info_satellitePM25')">Satellite data<img src="Icons/info.svg" class="infoIcon">
+                            <span class="popuptext" id="info_satellitePM25"></span>
+                        </div></td>
+                    </tr></table></td>
+
+                    <td><table><tr><td>
+                        <label class="switch">
+                        <input type="checkbox" name="AQIAirNow" onchange="activateLayer('AQIAirNow')">
+                        <span class="slider round"></span>
+                        </label></td><td class="horizSpace"><div class="infoPopup" id="infoPopupVeryHighRight" onclick="showInfoPopup('info_AQIAirNow')">Median AQI<img src="Icons/info.svg" class="infoIcon">
+                            <span class="popuptext" id="info_AQIAirNow"></span>
+                        </div></td>
+                    </tr></table></td>
+
+                    </tr>
+
+                    <!--Row 3-->
+                    <tr>
+                    <td colspan=2><table><tr><td>
+                        <label class="switch">
+                        <input type="checkbox" name="PM25AirNow" onchange="activateLayer('PM25AirNow')">
+                        <span class="slider round"></span>
+                        </label></td><td class="horizSpace"><div class="infoPopup" id="infoPopupHigh" onclick="showInfoPopup('info_PM25AirNow')">AirNow measurements<img src="Icons/info.svg" class="infoIcon">
+                            <span class="popuptext" id="info_PM25AirNow"></span>
+                        </div></td>
+                    </tr></table></td>
+
+                    <td><table><tr><td>
+                        <label class="switch">
+                        <input type="checkbox" name="AQI_EPA_County" onchange="activateLayer('AQI_EPA_County')">
+                        <span class="slider round"></span>
+                        </label></td><td class="horizSpace"><div class="infoPopup" id="infoPopupVeryHighRight" onclick="showInfoPopup('info_AQI_EPA_County')">Median AQI (County)<img src="Icons/info.svg" class="infoIcon">
+                            <span class="popuptext" id="info_AQI_EPA_County"></span>
+                        </div></td>
+                    </tr></table></td>
+                    </tr>
+
+                    <!--Row 4-->
+                    <tr>
+                    <td colspan=2><table><tr><td>
+                        <label class="switch">
+                        <input type="checkbox" name="PM25PurpleAir" onchange="activateLayer('PM25PurpleAir')">
+                        <span class="slider round"></span>
+                        </label></td><td class="horizSpace"><div class="infoPopup" id="infoPopupHigh" onclick="showInfoPopup('info_PM25PurpleAir')">PurpleAir measurements<img src="Icons/info.svg" class="infoIcon">
+                            <span class="popuptext" id="info_PM25PurpleAir"></span>
+                        </div></td>
+                    </tr></table></td>
+                    </tr>
+                        
+                </table>
+                
+                </td></tr>
+                
+                <tr>
+                <td class="panelLayoutShade">
+                <table width="550px" style="margin: 0px;">
+                    <tr><td colspan=3 align="center"><span style="font-size: 1.4em;">Public Health and Demographics</span></td></tr>
+                    <!--Row 0-->
+                    <tr>
+                        <td colspan=2><table><tr><td>
+                        <label class="switch">
+                        <input type="checkbox" name="DACs" onchange="activateLayer('DACs')">
+                        <span class="slider round"></span>
+                        </label></td><td class="horizSpace"><div class="infoPopup" id="infoPopupVeryVeryHighSlightRight" onclick="showInfoPopup('info_DACs')">Federally-designated disadvantaged/overburdened communities<img src="Icons/info.svg" class="infoIcon">
+                            <span class="popuptext" id="info_DACs"></span>
+                        </div></td>
+                        </tr></table></td>
+        
+                    </tr>
+                    <tr>
+                    <td><table><tr><td>
+                        <label class="switch">
+                        <input type="checkbox" name="NationalHighwaySystem" onchange="activateLayer('NationalHighwaySystem')">
+                        <span class="slider round"></span>
+                        </label></td><td class="horizSpace"><div class="infoPopup" onclick="showInfoPopup('info_NationalHighwaySystem')">National highway system<img src="Icons/info.svg" class="infoIcon">
+                            <span class="popuptext" id="info_NationalHighwaySystem"></span>
+                        </div></td>
+                        </tr></table></td>
+                        <td><table><tr><td>
+                            <label class="switch">
+                            <input type="checkbox" name="railroads_LA" onchange="activateLayer('railroads_LA')">
+                            <span class="slider round"></span>
+                            </label></td><td class="horizSpace"><div class="infoPopup" id="infoPopupRight" onclick="showInfoPopup('info_railroads_LA')">Railroads<img src="Icons/info.svg" class="infoIcon">
+                                <span class="popuptext" id="info_railroads_LA"></span>
+                            </div></td>
+                            </tr></table></td>
+    
+                    </tr>
+
+<!--                    <tr><td>&nbsp;</td></tr>-->
+
+                    <!--Row 1-->
+
+                    <tr><td colspan=2><b><i>Health, environmental, and socioeconomic layers (choose one):</td></tr>
+
+                    <!--Row 2-->
+                    <tr>
+                        <td><table><tr><td>
+                        <label class="switch">
+                        <input type="checkbox" name="P_DEMOGIDX_EJScreen" onchange="activateLayer('P_DEMOGIDX_EJScreen')">
+                        <span class="slider round"></span>
+                        </label></td><td class="horizSpace"><div class="infoPopup" onclick="showInfoPopup('info_P_DEMOGIDX_EJScreen')">Demographic vulnerability index<img src="Icons/info.svg" class="infoIcon">
+                            <span class="popuptext" id="info_P_DEMOGIDX_EJScreen"></span>
+                        </div></td>
+                        </tr></table></td>
+
+                        <td><table><tr><td>
+                        <label class="switch">
+                        <input type="checkbox" name="P_CANCER_EJScreen" onchange="activateLayer('P_CANCER_EJScreen')">
+                        <span class="slider round"></span>
+                        </label></td><td class="horizSpace"><div class="infoPopup" id="infoPopupRight" onclick="showInfoPopup('info_P_CANCER_EJScreen')">Air toxics cancer risk<img src="Icons/info.svg" class="infoIcon">
+                            <span class="popuptext" id="info_P_CANCER_EJScreen"></span>
+                        </div></td>
+                        </tr></table></td>
+        
+                    </tr>
+
+                    <!--Row 3-->
+                    <tr>
+                        <td><table><tr><td>
+                        <label class="switch">
+                        <input type="checkbox" name="DPF_CEJST" onchange="activateLayer('DPF_CEJST')">
+                        <span class="slider round"></span>
+                        </label></td><td class="horizSpace"><div class="infoPopup" onclick="showInfoPopup('info_DPF_CEJST')">Population density<img src="Icons/info.svg" class="infoIcon">
+                            <span class="popuptext" id="info_DPF_CEJST"></span>
+                        </div></td>
+                        </tr></table></td>
+
+                        <td><table><tr><td>
+                        <label class="switch">
+                        <input type="checkbox" name="P_RESP_EJScreen" onchange="activateLayer('P_RESP_EJScreen')">
+                        <span class="slider round"></span>
+                        </label></td><td class="horizSpace"><div class="infoPopup" id="infoPopupRight" onclick="showInfoPopup('info_P_RESP_EJScreen')">Air toxics respiratory hazards<img src="Icons/info.svg" class="infoIcon">
+                            <span class="popuptext" id="info_P_RESP_EJScreen"></span>
+                        </div></td>
+                        </tr></table></td>
+        
+                    </tr>
+
+                    <!--Row 4-->
+                    <tr>
+    
+                        <td><table><tr><td>
+                        <label class="switch">
+                        <input type="checkbox" name="P_LIFEEXPP_EJScreen" onchange="activateLayer('P_LIFEEXPP_EJScreen')">
+                        <span class="slider round"></span>
+                        </label></td><td class="horizSpace"><div class="infoPopup" onclick="showInfoPopup('info_P_LIFEEXPP_EJScreen')">Low life expectancy<img src="Icons/info.svg" class="infoIcon">
+                            <span class="popuptext" id="info_P_LIFEEXPP_EJScreen"></span>
+                        </div></td>
+                        </tr></table></td>
+        
+  
+                        <td><table><tr><td>
+                        <label class="switch">
+                        <input type="checkbox" name="AF_PFS_CEJST" onchange="activateLayer('AF_PFS_CEJST')">
+                        <span class="slider round"></span>
+                        </label></td><td class="horizSpace"><div class="infoPopup" id="infoPopupRight" onclick="showInfoPopup('info_AF_PFS_CEJST')">Asthma among adults<img src="Icons/info.svg" class="infoIcon">
+                            <span class="popuptext" id="info_AF_PFS_CEJST"></span>
+                        </div></td>
+                        </tr></table></td>
+        
+                    </tr>
+                    <!--Row 5-->
+                    <tr>
+                        <td><table><tr><td>
+                            <label class="switch">
+                            <input type="checkbox" name="PM25_EJScreen" onchange="activateLayer('PM25_EJScreen')">
+                            <span class="slider round"></span>
+                            </label></td><td class="horizSpace"><div class="infoPopup" onclick="showInfoPopup('info_PM25_EJScreen')">PM<sub>2.5</sub> (EJScreen)<img src="Icons/info.svg" class="infoIcon">
+                                <span class="popuptext" id="info_PM25_EJScreen"></span>
+                            </div></td>
+                        </tr></table></td>
+    
+    
+                        <td><table><tr><td>
+                            <label class="switch">
+                            <input type="checkbox" name="DSLPM_EJScreen" onchange="activateLayer('DSLPM_EJScreen')">
+                            <span class="slider round"></span>
+                            </label></td><td class="horizSpace"><div class="infoPopup" id="infoPopupRight" onclick="showInfoPopup('info_DSLPM_EJScreen')">Diesel PM (EJ Screen)<img src="Icons/info.svg" class="infoIcon">
+                                <span class="popuptext" id="info_DSLPM_EJScreen"></span>
+                            </div></td>
+                        </tr></table></td>
+
+        
+                    </tr>
+
+
+                </table>
+                </td></tr>
+
+                <tr>
+                <td class="panelLayoutShade">
+                <table width="100%" style="margin: 0px;">
+                    <!--Row 1-->
+                    <tr><td colspan=3 align="center"><span style="font-size: 1.4em;">PM<sub>2.5</sub> Emissions by Source</span></td></tr>
+                    <tr>
+                        <td><table><tr><td>
+                        <label class="switch">
+                        <input type="checkbox" name="PM25NEI" onchange="activateLayer('PM25NEI')">
+                        <span class="slider round"></span>
+                        </label></td><td class="horizSpace"><div class="infoPopup" onclick="showInfoPopup('info_PM25NEI')">Facility PM<sub>2.5</sub> emissions<img src="Icons/info.svg" class="infoIcon">
+                            <span class="popuptext" id="info_PM25NEI"></span>
+                        </div></td>
+                        </tr></table></td>
+     
+                    </tr>
+<!--                    <tr><td>&nbsp;</td></tr>-->
+
+                    <tr><td colspan=2><div class="infoPopup" id="infoPopupSlightRight" onclick="showInfoPopup('info_OtherSources')"><b><i>County-level PM<sub>2.5</sub> emissions estimates from (choose one):</b></i><img src="Icons/info.svg" class="infoIcon">
+                        <span class="popuptext" id="info_OtherSources"></span>
+                    </div></td></tr>
+
+                    <!--Row 2-->
+                    <tr>
+                        <td><table><tr><td>
+                        <label class="switch">
+                        <input type="checkbox" name="Fires_NEI_County" onchange="activateLayer('Fires_NEI_County')">
+                        <span class="slider round"></span>
+                        </label></td><td class="horizSpace"><div class="infoPopup" onclick="showInfoPopup('info_Fires_NEI_County')">Fires<img src="Icons/info.svg" class="infoIcon">
+                            <span class="popuptext" id="info_Fires_NEI_County"></span>
+                        </div></td>
+                        </tr></table></td>
+
+                        <td><table><tr><td>
+                        <label class="switch">
+                        <input type="checkbox" name="Onroad_NEI_County" onchange="activateLayer('Onroad_NEI_County')">
+                        <span class="slider round"></span>
+                        </label></td><td class="horizSpace"><div class="infoPopup" id="infoPopupRight" onclick="showInfoPopup('info_Onroad_NEI_County')">Mobile - onroad<img src="Icons/info.svg" class="infoIcon">
+                            <span class="popuptext" id="info_Onroad_NEI_County"></span>
+                        </div></td>
+                        </tr></table></td>
+          
+                    </tr>
+
+                    <!--Row 2-->
+                    <tr>
+                        <td><table><tr><td>
+                        <label class="switch">
+                        <input type="checkbox" name="Dust_NEI_County" onchange="activateLayer('Dust_NEI_County')">
+                        <span class="slider round"></span>
+                        </label></td><td class="horizSpace"><div class="infoPopup" onclick="showInfoPopup('info_Dust_NEI_County')">Dust<img src="Icons/info.svg" class="infoIcon">
+                            <span class="popuptext" id="info_Dust_NEI_County"></span>
+                        </div></td>
+                        </tr></table></td>
+
+                        <td><table><tr><td>
+                        <label class="switch">
+                        <input type="checkbox" name="Nonroad_NEI_County" onchange="activateLayer('Nonroad_NEI_County')">
+                        <span class="slider round"></span>
+                        </label></td><td class="horizSpace"><div class="infoPopup" id="infoPopupRight" onclick="showInfoPopup('info_Nonroad_NEI_County')">Mobile - off-road<img src="Icons/info.svg" class="infoIcon">
+                            <span class="popuptext" id="info_Nonroad_NEI_County"></span>
+                        </div></td>
+                        </tr></table></td>
+          
+                    </tr>
+
+
+
+                    <!--Row 2-->
+                    <tr>
+                        <td><table><tr><td>
+                        <label class="switch">
+                        <input type="checkbox" name="Ag_Dust_NEI_County" onchange="activateLayer('Ag_Dust_NEI_County')">
+                        <span class="slider round"></span>
+                        </label></td><td class="horizSpace"><div class="infoPopup" onclick="showInfoPopup('info_Ag_Dust_NEI_County')">Agricultural dust<img src="Icons/info.svg" class="infoIcon">
+                            <span class="popuptext" id="info_Ag_Dust_NEI_County"></span>
+                        </div></td>
+                        </tr></table></td>
+
+                        <td><table><tr><td>
+                        <label class="switch">
+                        <input type="checkbox" name="Marine_Loc_NEI_County" onchange="activateLayer('Marine_Loc_NEI_County')">
+                        <span class="slider round"></span>
+                        </label></td><td class="horizSpace"><div class="infoPopup" id="infoPopupRight" onclick="showInfoPopup('info_Marine_Loc_NEI_County')">Marine and locomotive<img src="Icons/info.svg" class="infoIcon">
+                            <span class="popuptext" id="info_Marine_Loc_NEI_County"></span>
+                        </div></td>
+                        </tr></table></td>
+          
+                    </tr>
+
+
+                    <!--Row 2-->
+                    <tr>
+                        <td><table><tr><td>
+                        <label class="switch">
+                        <input type="checkbox" name="Ind_Oil_Gas_Mining_NEI_County" onchange="activateLayer('Ind_Oil_Gas_Mining_NEI_County')">
+                        <span class="slider round"></span>
+                        </label></td><td class="horizSpace"><div class="infoPopup" onclick="showInfoPopup('info_Ind_Oil_Gas_Mining_NEI_County')">Oil, gas, and mining<img src="Icons/info.svg" class="infoIcon">
+                            <span class="popuptext" id="info_Ind_Oil_Gas_Mining_NEI_County"></span>
+                        </div></td>
+                        </tr></table></td>
+
+                        <td><table><tr><td>
+                        <label class="switch">
+                        <input type="checkbox" name="Res_Fuel_Comb_NEI_County" onchange="activateLayer('Res_Fuel_Comb_NEI_County')">
+                        <span class="slider round"></span>
+                        </label></td><td class="horizSpace"><div class="infoPopup" id="infoPopupRight" onclick="showInfoPopup('info_Res_Fuel_Comb_NEI_County')">Residential fuel combustion<img src="Icons/info.svg" class="infoIcon">
+                            <span class="popuptext" id="info_Res_Fuel_Comb_NEI_County"></span>
+                        </div></td>
+                        </tr></table></td>
+          
+                    </tr>
+
+
+                    <!--Row 2-->
+                    <tr>
+                        <td><table><tr><td>
+                        <label class="switch">
+                        <input type="checkbox" name="Nonpoint_NEI_County" onchange="activateLayer('Nonpoint_NEI_County')">
+                        <span class="slider round"></span>
+                        </label></td><td class="horizSpace"><div class="infoPopup" onclick="showInfoPopup('info_Nonpoint_NEI_County')">Other nonpoint sources<img src="Icons/info.svg" class="infoIcon">
+                            <span class="popuptext" id="info_Nonpoint_NEI_County"></span>
+                        </div></td>
+                        </tr></table></td>
+
+                        <td><table><tr><td>
+                        <label class="switch">
+                        <input type="checkbox" name="Ind_Fuel_Comb_NEI_County" onchange="activateLayer('Ind_Fuel_Comb_NEI_County')">
+                        <span class="slider round"></span>
+                        </label></td><td class="horizSpace"><div class="infoPopup" id="infoPopupRight" onclick="showInfoPopup('info_Ind_Fuel_Comb_NEI_County')">Industrial fuel combustion<img src="Icons/info.svg" class="infoIcon">
+                            <span class="popuptext" id="info_Ind_Fuel_Comb_NEI_County"></span>
+                        </div></td>
+                        </tr></table></td>
+          
+                    </tr>
+
+
+                    <!--Row 2-->
+                    <tr>
+                        <td><table><tr><td>
+                        <label class="switch">
+                        <input type="checkbox" name="Point_Sources_NEI_County" onchange="activateLayer('Point_Sources_NEI_County')">
+                        <span class="slider round"></span>
+                        </label></td><td class="horizSpace"><div class="infoPopup" onclick="showInfoPopup('info_Point_Sources_NEI_County')">Point sources (countywide)<img src="Icons/info.svg" class="infoIcon">
+                            <span class="popuptext" id="info_Point_Sources_NEI_County"></span>
+                        </div></td>
+                        </tr></table></td>
+          
+                    </tr>
+                </table>
+            </td></tr>
+
+            <tr>
+
+                <td class="panelLayoutShade">
+                <table width="100%" style="margin: 0px;">
+                    <tr><td colspan=3 align="center"><span style="font-size: 1.4em;">Industrial Decarbonization Data Explorer</span></td></tr>
+                    <tr>
+
+                        <td><table><tr><td>
+                        <label class="switch">
+                        <input type="checkbox" name="PM25red" onchange="activateLayer('PM25red')">
+                        <span class="slider round"></span>
+                        </label></td><td class="horizSpace"><div class="infoPopup" onclick="showInfoPopup('info_PM25red')">PM<sub>2.5</sub> <b>reductions</b> from carbon capture<img src="Icons/info.svg" class="infoIcon">
+                            <span class="popuptext" id="info_PM25red"></span>
+                        </div></td>
+                        </tr></table></td>
+
+                    </tr>
+<!--                    <tr>
+
+                        <td><table><tr><td>
+                        <label class="switch">
+                        <input type="checkbox" name="PM25new" onchange="activateLayer('PM25new')">
+                        <span class="slider round"></span>
+                        </label></td><td class="horizSpace"><div class="infoPopup" onclick="showInfoPopup('info_PM25new')">Projected PM<sub>2.5</sub> emissions after carbon capture<img src="Icons/info.svg" class="infoIcon">
+                            <span class="popuptext" id="info_PM25new"></span>
+                        </div></td>
+                        </tr></table></td>
+
+                    </tr>-->
+                </table>
+            </td></tr>
+
+
+            </table>
+        </div>
+    </div>
+
+
+    </td>
+    </tr>
+ </table>
+
+    </body>
+</html>
+
+<style>
+/* Base Html Styling */
+    html {
+		font-family:  Arial;
+		color: rgb(0, 0, 0);
+		font-size: 10px;
+		}
+
+	td {
+ 	   font-size: 14px;
+       vertical-align: top;
+  	}
+
+    .AQItable{
+       border: 1px solid black;
+       border-collapse: collapse;
+    }
+    
+    body{
+        overflow-x: hidden; /* Hide horizontal scrollbar */
+    }
+    .smallTd {
+        font-size: 12px;
+    }
+
+    select{
+        display: inline-block;
+        border:none;
+        padding: 10px 20px;
+        background-color: #EAEDEE;
+        border-radius:5px;
+        font-size: 16px;
+    }
+
+    select:focus{
+        outline:none;
+    }
+
+    option:disabled {
+         color: rgb(156, 156, 156);
+         font-style: italic;
+    }
+
+    .year-select{
+        font-size: 16px;
+        padding-left: 30px;
+    }
+    .layer-select{
+        font-size: 16px;
+        padding-left: 10px;
+    }
+    /* unvisited link */
+    a:link {
+    color: rgb(94, 95, 187);
+    }
+
+    /* visited link */
+    a:visited {
+    color: rgb(94, 95, 187);
+    }
+
+    /* mouse over link */
+    a:hover {
+    color: rgb(58, 4, 94);
+    }
+
+    /* selected link */
+    a:active {
+    color: blue;
+    }
+
+    .titleLogo{
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .CSlogo {
+        position: relative;
+        display: inline;
+        z-index: 1;
+        cursor:  pointer;
+     }
+
+/* Main Menu Layout */
+    .panelLayout {
+        border: 1px solid slategray;
+        padding: 10px;
+        width: 300px;
+    }
+
+    /* Main Menu Layout Option 2 - shaded background*/
+    .panelLayoutShade {
+        padding: 10px;
+        width: 550px;
+        background-color: #EAEDEE;
+		border-radius: 0px;
+        vertical-align: top;
+    }
+
+    /* 2 column version */
+    .panelLayoutShade_2 {
+        padding: 10px;
+        width: 920px;
+        background-color: #EAEDEE;
+		border-radius: 0px;
+        vertical-align: top;
+    }
+    
+    /* No fixed width to panel; size of text */
+    .panelLayoutShade_0 {
+        padding: 10px;
+        background-color: #EAEDEE;
+		border-radius: 0px;
+        width: 100%;
+    }
+
+    .horizSpace {
+        padding-right: 20px;
+    }
+
+   .menuTab {
+        font-size: 1.5em;
+        cursor:  pointer;
+        user-select:  none;
+        padding: 10px;
+        width: 550px;
+        background-color: #EAEDEE;
+		border-radius: 10px;
+        position: absolute;
+  }
+
+/* Legend */
+    .legendWrapper {
+        position: relative;
+        left: 5px;
+    }
+
+    .legend{
+        border-width: 1px;
+        border-style: solid;
+        border-color: #4e4e4e;
+		background-color: #EAEDEE;
+		border-radius: 0px;
+		position: static;
+		display: inline-block;
+        width: 558px;
+        min-height: 98px;
+		font-size: 16px;
+		padding: 5px 0px 0px 10px;
+	}
+
+	.entryLabel{
+		font-size: 14px;
+        padding: 0px 20px 0px 10px;
+        text-align: left;
+	}
+
+/* Toggles */
+    .toggleLayout {
+		border-spacing: 5px 8px;
+    }
+
+    /* The switch - the box around the slider */
+ 	.switch {
+		position: relative;
+		display: inline-block;
+		width: 30px;
+		height: 17px;
+	}
+
+    /* Hide default HTML checkbox */
+	.switch input {
+		opacity: 0;
+		width: 0;
+		height: 0;
+	}
+
+    /* The slider */
+	.slider {
+		position: absolute;
+		cursor: pointer;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background-color: #ccc;
+		-webkit-transition: .4s;
+		transition: .4s;
+	}
+
+	.slider:before {
+		position: absolute;
+		content: "";
+		height: 13px;
+		width: 13px;
+		left: 2px;
+		bottom: 2px;
+		background-color: white;
+		-webkit-transition: .4s;
+		transition: .4s;
+	}
+
+	input:checked + .slider {
+		background-color: #2196F3;
+	}
+
+	input:focus + .slider {
+		box-shadow: 0 0 1px #2196F3;
+	}
+
+	input:checked + .slider:before {
+		-webkit-transform: translateX(13px);
+		-ms-transform: translateX(13px);
+		transform: translateX(13px);
+	}
+
+	/* Rounded sliders */
+	.slider.round {
+		border-radius: 17px;
+	}
+
+	.slider.round:before {
+		border-radius: 50%;
+	}
+    .stage {
+		height: 300px;
+    }
+
+    .loadingTitle {
+		font-family:  Arial;
+		color: slategray;
+		font-size: 20px;
+        position: relative;
+		left: -70px;
+        top: 10px;
+    }
+
+/* Panel and Animation on Loading */
+    #loadingPanel {
+        opacity: 1;
+        transition: opacity 3s; 
+        z-index: 1;
+        font-family:  Arial;
+		color: rgb(0, 0, 0);
+		font-size: 20px;
+        padding: 100px 300px;
+        margin-top: -50px;
+    }
+
+    #loadingPanel.fade {
+        opacity: 0;
+		z-index: -1;
+    }
+
+    .dot-elastic {
+        position: relative;
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 5px;
+        background-color: slategray;
+        color: slategray;
+        animation: dotElastic 1s infinite linear;
+	}
+
+	.dot-elastic::before, .dot-elastic::after {
+		content: '';
+		display: inline-block;
+		position: absolute;
+		top: 0;
+	}
+
+	.dot-elastic::before {
+		left: -15px;
+		width: 10px;
+		height: 10px;
+		border-radius: 5px;
+        background-color: slategray;
+        color: slategray;
+ 		animation: dotElasticBefore 1s infinite linear;
+	}
+
+	.dot-elastic::after {
+		left: 15px;
+		width: 10px;
+		height: 10px;
+		border-radius: 5px;
+        background-color: slategray;
+        color: slategray;
+ 		animation: dotElasticAfter 1s infinite linear;
+	}
+
+	@keyframes dotElasticBefore {
+		0% {transform: scale(1, 1);}
+		25% {transform: scale(1, 1.5);}
+		50% {transform: scale(1, 0.67);}
+		75% {transform: scale(1, 1);}
+		100% {transform: scale(1, 1);}
+	}
+
+	@keyframes dotElastic {
+		0% {transform: scale(1, 1);}
+		25% {transform: scale(1, 1);}
+		50% {transform: scale(1, 1.5);}
+		75% {transform: scale(1, 1);}
+		100% {transform: scale(1, 1);}
+	}
+
+	@keyframes dotElasticAfter {
+		0% {transform: scale(1, 1);}
+		25% {transform: scale(1, 1);}
+		50% {transform: scale(1, 0.67);}
+		75% {transform: scale(1, 1.5);}
+		100% {transform: scale(1, 1);}
+	}
+
+/* Scale Bar Options */
+	.leaflet-control-scale-line{
+		border: 2px solid #a5a5a5;
+		border-top: none;
+		margin: 0px 0px 50px 0px;
+		color: slategray;
+	}
+
+/* Leaflet pop-up Options */
+    .popupText {
+        font-size: 14px;
+        font-family: Arial;
+        color: slategray;
+    }
+
+/* Author tab */
+    .expandButton {
+        user-select:  none;
+        display:  inline-block;
+        float:  right;
+        vertical-align:  middle;
+    }
+
+    .authorTab {
+        background-color: white;
+        opacity: 0.75;
+        position: absolute;
+        bottom: 5px; right: 5px;
+        z-index: 1;
+        border-radius: 2px;"
+        cursor:  pointer;
+        user-select:  none;
+     }
+  
+    .expand-container {
+        overflow: hidden;
+    }
+
+  .collapsed {
+    border-bottom: ;
+    margin-top: -1000%;
+    transition: all 0s;
+    width: 100px;
+  }
+
+  .expanded {
+    margin-top: 5px;
+    background-color: #EAEDEE;
+    border-radius: 10px;
+  }
+
+  .square-button{
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    border: solid 1px #808080;
+    text-align: right;
+    opacity: 1;
+  }
+  .square-label{
+    display: inline-block;
+    height: 14px;
+    text-align: right;
+  }
+
+  .round-button{
+    border-radius: 50%;
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    background: white;
+    border: solid 1px black;
+    text-align: center;
+    opacity: 0.5;
+    margin: 0px 0px 0px 0px;
+  }
+  .round-button-small{
+    border-radius: 50%;
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background: white;
+    border: solid 1px black;
+    text-align: center;
+    opacity: 0.5;
+    margin: 3px 0px 0px 5px;
+  }
+  .square-button2{
+    display: inline-block;
+    width: 14px;
+    height: 14px;
+    background: white;
+    border: solid 2px black;
+    text-align: center;
+    opacity: 0.5;
+    margin: 0px 0px 0px 0px;
+  }
+
+  .icon{
+		position: static;
+		width: 10px;
+		text-align:center;
+	}
+
+    .custom-popup {
+        border-radius: 2px;
+        color: #504e4e;
+        font-size: 12px;
+        line-height: 10px;
+        height: 10 px ;
+        max-height: 300px;
+    }
+
+    .custom-popup, .leaflet-popup-tip {
+        background: #e7e7e7;
+        border: none;
+        box-shadow: none;
+    }
+
+    .leaflet-popup-content-wrapper {
+        background: #ffffff;
+        border-radius: 2px;
+    }
+
+    .leaflet-popup {
+        position: absolute;
+        text-align: center;
+    }
+
+    .leaflet-popup-content {
+        margin-top: 20px;
+        margin-right: 2px;
+        padding-right: 12px;
+        min-width: 100 px !important;
+        max-height: 300px;
+        overflow: auto;
+    }
+
+.infoPopup {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+/* The actual popup */
+.infoPopup .popuptext {
+  visibility: hidden;
+  width: 400px;
+  background-color: white;
+  color: #1f1f1f;
+  text-align: left;
+  border-radius: 6px;
+  border-style: solid;
+  border-width: 2px;
+  border-color: #1f1f1f;
+  padding: 8px 8px;
+  position: absolute;
+  z-index: 1;
+  bottom: 20px; /* Intended for it to not cover the button */
+  left: 50%;
+  margin-left: -80px;
+}
+#infoPopupLow .popuptext {
+  bottom: 0px; /* This is optimized for the top of the screen. Have several different styles for location on screen */
+}
+#infoPopupHigh .popuptext {
+  bottom: -100px; /* This is optimized for the top of the screen. Have several different styles for location on screen */
+}
+#infoPopupMidHigh .popuptext {
+  bottom: -200px; /* This is optimized for the top of the screen. Have several different styles for location on screen */
+}
+#infoPopupVeryHigh .popuptext {
+  bottom: -300px; /* This is optimized for the top of the screen. Have several different styles for location on screen */
+}
+#infoPopupHighRight .popuptext {
+  bottom: -100px; /* This is optimized for the top of the screen. Have several different styles for location on screen */
+  left: -120px;
+}
+#infoPopupVeryHighRight .popuptext {
+  bottom: -300px; /* This is optimized for the top of the screen. Have several different styles for location on screen */
+  left: -120px;
+}
+#infoPopupRight .popuptext {
+  left: -120px;
+}
+#infoPopupSlightRight .popuptext {
+  left: 15%;
+}
+#infoPopupVeryVeryHighSlightRight .popuptext {
+  bottom: -400px; /* This is optimized for the top of the screen. Have several different styles for location on screen */
+  left: 15%;
+}
+
+/* Toggle this class - hide and show the popup */
+.infoPopup .show {
+  visibility: visible;
+  -webkit-animation: fadeIn 1s;
+  animation: fadeIn 1s;
+}
+
+.infoPopup .hide {
+  visibility: hidden;
+}
+
+/* Add animation (fade in the popup) */
+@-webkit-keyframes fadeIn {
+  from {opacity: 0;} 
+  to {opacity: 1;}
+}
+
+@keyframes fadeIn {
+  from {opacity: 0;}
+  to {opacity:1 ;}
+}
+
+.closeBox{
+    display: block;
+    float: right;
+    margin-top: -5px;
+    margin-right: -5px;
+}
+
+.infoIcon{
+    height: 15px;
+    margin-bottom: -2px;
+}
+</style>
+
+<!--Set up map-->
+<script>
+	var newMap = L.map('map',{attributionControl: false}).setView([31.0, -91.44], 8);
+    var plainBase = true;									
+
+	var plainLayer = L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png', {});
+	var satLayer = L.tileLayer('http://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}',{
+					maxZoom: 20,
+					subdomains:['mt0','mt1','mt2','mt3']
+	});
+	var zoomLayer = L.tileLayer('http://{s}.tile.osm.org/{z}/{x}/{y}.png', {maxZoom: 21,maxNativeZoom: 18});
+
+	satLayer.layerOrder = 0;
+	plainLayer.layerOrder = 0;
+	zoomLayer.layerOrder = 0;
+	
+	plainLayer.addTo(newMap);
+    
+	L.control.scale({position: 'bottomleft', metric: false}).addTo(newMap);
+
+//    var coords = []; // return map after popup close
+//    newMap.on('popupopen', function (e){
+//        coords = newMap.getCenter();
+//    });
+
+//    newMap.on('popupclose', function (e){
+//            newMap.setView([coords.lat, coords.lng], newMap._zoom);
+//        });
+
+
+    //Zoom behavior------------------------------------------------------------------------------------------------------//
+    newMap.on('zoomend', function() {
+        var active = toggleDatabase.filter(layer => layer.toggle == true); //Collection of active layerInfo objects
+		if(newMap._zoom >= 19 && plainBase){
+			newMap.removeLayer(plainLayer);
+			zoomLayer.addTo(newMap);
+		} else if(plainBase) {
+			newMap.removeLayer(zoomLayer);
+			plainLayer.addTo(newMap);
+		};
+		activateLayer('base');
+	});
+	
+	newMap.options.minZoom = 4;
+	newMap.options.maxZoom = 20;
+
+    //Home button and basemap options--------------------------------------------------------------------------------------//
+	function mapHome(){
+			newMap.setView([31.0, -91.44], 8);
+	};
+
+	function toggleBasemap(){
+		plainBase = !plainBase;
+		if(plainBase == true){
+			satLayer.remove();
+			plainLayer.addTo(newMap);
+
+		} else {
+			satLayer.addTo(newMap);
+			newMap.removeLayer(plainLayer);
+		}
+	}
+
+</script>
+
+<!--Load JSON files, setup database of layers-->
+<script>
+	var toggleDatabase = [];
+    var howManySourcesLoaded = 0;
+	var displayProperties = {};
+    var layerNames = ["DACs","EJScreen","CEJST","NEI_County","NationalHighwaySystem","railroads_LA","PM25NEI","PM25red","PM25AirNow","PM25PurpleAir","AQIAirNow","satellitePM25","AQI_EPA_County"];
+
+    window.onload = function() {
+ 		layerNames.forEach(addJSONSource);
+    };
+
+    function addJSONSource(name)	{
+		var script = document.createElement('script');
+        var loadingPanel = document.getElementById('loadingPanel');
+			
+		script.type = "text/javascript";
+		script.src = "Data/"+name+".json";
+		document.head.appendChild(script); 
+        script.onload = function () {
+			howManySourcesLoaded++;
+			if (howManySourcesLoaded == layerNames.length){
+				layerNames.forEach(function(e){
+                    //switch back on if reading properties from JSONs:
+                    displayProperties[e]=eval(e+'.displayProperties');
+					addLayerToDatabase(e);
+//					if(displayProperties[e].onLoad){
+//                        activateLayer(e);
+//					 };			
+				});
+				loadingPanel.classList.toggle('fade');
+                Object.keys(displayProperties).forEach(function(key) {
+                    if(displayProperties[key].onLoad){
+                        activateLayer(key);
+                        var switchArray = document.getElementsByName(key);
+                        for(var i=0;i<switchArray.length;i++){
+                            switchArray[i].checked = true;
+                        }
+                    }
+                });
+
+			};
+		};
+	};
+
+    function addLayerToDatabase(name){
+        eval("var feature ="+name+";"); 
+        if(name == 'EJScreen' || name == 'CEJST' || name == 'NEI_County'){ //many layers in JSON file
+            var subLayerNames = ["PM25","P_DEMOGIDX","P_CANCER","P_RESP","P_LIFEEXPP","AF_PFS","P_PTRAF","DPF","DSLPM","Onroad","Nonroad","Dust","Nonpoint","Ind_Oil_Gas_Mining","Fires","Ag_Dust","Marine_Loc","Ind_Fuel_Comb","Res_Fuel_Comb","Point_Sources"];
+            var subLayerDisplayProperties = {
+                "PM25": {"color":"brewer","layerOrder":3,"QuantityDescriptor":"EJScreen PM<sub>2.5</sub> (&#181;g/m<sup>3</sup>)"},
+                "P_CANCER": {"color":"brewer","layerOrder":3,"QuantityDescriptor":"Air toxics cancer risk (percentile)"},                
+                "P_RESP": {"color":"brewer","layerOrder":3,"QuantityDescriptor":"Air toxics respiratory hazard index (percentile)"},                
+                "P_LIFEEXPP": {"color":"brewer","layerOrder":3,"QuantityDescriptor":"Low life expectancy (percentile)"},
+                "AF_PFS": {"color":"brewer","layerOrder":3,"QuantityDescriptor":"Current asthma among adults (percentile)"},
+                "DSLPM": {"color":"brewer","layerOrder":3,"QuantityDescriptor":"Diesel particulate matter (&#181;g/m<sup>3</sup>)"},
+                "DPF": {"color":"brewer","layerOrder":3,"QuantityDescriptor":"Population density (per sq. mi)"},
+                "P_PTRAF": {"color":"brewer","layerOrder":3,"QuantityDescriptor":"Traffic proximity (percentile)"},
+                "P_DEMOGIDX": {"color":"brewer","layerOrder":3,"QuantityDescriptor":"Demographic index (percentile)"},
+                "Onroad": {"color":"brewer","layerOrder":3,"QuantityDescriptor":"Onroad mobile (tons PM<sub>2.5</sub>)"},
+                "Nonroad": {"color":"brewer","layerOrder":3,"QuantityDescriptor":"Off-road mobile (tons PM<sub>2.5</sub>)"},
+                "Dust": {"color":"brewer","layerOrder":3,"QuantityDescriptor":"Dust (tons PM<sub>2.5</sub>)"},
+                "Nonpoint": {"color":"brewer","layerOrder":3,"QuantityDescriptor":"Other nonpoint (tons PM<sub>2.5</sub>)"},
+                "Ind_Oil_Gas_Mining": {"color":"brewer","layerOrder":3,"QuantityDescriptor":"Oil, gas, and mining (tons PM<sub>2.5</sub>)"},
+                "Fires": {"color":"brewer","layerOrder":3,"QuantityDescriptor":"Wildfires, fires, and prescribed burns (tons PM<sub>2.5</sub>)"},
+                "Ag_Dust": {"color":"brewer","layerOrder":3,"QuantityDescriptor":"Agricultural dust (tons PM<sub>2.5</sub>)"},
+                "Marine_Loc": {"color":"brewer","layerOrder":3,"QuantityDescriptor":"Marine and locomotive mobile (tons PM<sub>2.5</sub>)"},
+                "Ind_Fuel_Comb": {"color":"brewer","layerOrder":3,"QuantityDescriptor":"Industrial, institutional, and commercial fuel combustion (tons PM<sub>2.5</sub>)"},
+                "Res_Fuel_Comb": {"color":"brewer","layerOrder":3,"QuantityDescriptor":"Residential fuel combustion (tons PM<sub>2.5</sub>)"},
+                "Point_Sources": {"color":"brewer","layerOrder":3,"QuantityDescriptor":"All point sources (tons PM<sub>2.5</sub>)"},
+            };
+            subLayerNames.forEach(function(f){
+                if(f in feature.features[0].properties){ //check if key in first feature
+
+                    copyFeature = JSON.parse(JSON.stringify(feature)); //Don't modify the original feature
+                    copyFeature.features.forEach(function(e){ //Add field called Quantity for each sublayer
+                        e.properties['QuantityDescriptor']=subLayerDisplayProperties[f].QuantityDescriptor;
+
+                        if(e.properties[f] == undefined){ //There are null values in the dataset
+                            e.properties['Quantity']=-10000000;
+                        } else {
+                            if(f == 'AF_PFS'){
+                                e.properties['Quantity']=e.properties[f] * 100; // the values are 0-1
+                            } else {
+                                e.properties['Quantity']=e.properties[f];
+                            }
+                        }
+                        delete e.properties[f];
+                    })
+                    
+                    if(subLayerDisplayProperties[f].onLoad === true){
+                        copyFeature.displayProperties.onLoad = true;
+                    }
+                    displayProperties[f.concat("_",name)]=copyFeature.displayProperties; //Need to add entries to displayProperties for sublayers (inherited from main layer)
+                    toggleDatabase.push(new LayerInfo(f.concat("_",name),copyFeature));
+                }
+            });
+        } else {
+            if(name == 'AQI_EPA_County'){
+                feature.features[0].properties['QuantityDescriptor']='AQI'
+            }
+            toggleDatabase.push(new LayerInfo(name,feature));
+        }
+    }
+
+    function LayerInfo(name,feature) { 
+        this.name = name;
+        this.jsonFile = "Data/"+name+".json";
+        this.toggle = false;
+        this.type = displayProperties[name].type;
+        this.leafletLayer = null;
+        this.feature = feature;
+        if (displayProperties[name].color == 'random'){
+            setColors(name,feature)
+        }
+        this.color = displayProperties[name].color;
+        this.scale = displayProperties[name].scale;
+        this.iconFile = displayProperties[name].iconFile;
+        this.weight = displayProperties[name].weight;
+        this.fillOpacity = displayProperties[name].fillOpacity;
+        this.layerOrder = displayProperties[name].layerOrder;
+    };
+
+
+</script>
+
+<!---Functions to handle layer toggling and drawing order ----------------------------------------------------------------------------------->
+<script>
+  	//first function activates, checks active, handles layer order, and builds legend 
+	function activateLayer(layerName){ 
+		var active = toggleDatabase.filter(layer => layer.toggle == true); //Collection of active layerInfo objects
+
+		if(layerName == 'base'){ 
+
+		//redraws point layers after zooming, passing new zoom level to size points
+			active.filter(e => e.type == "point").forEach(function(f){
+						drawLayer(f.name);
+						drawLayer(f.name);
+					});
+
+            makeLegend(active); 
+
+		} else if (layerName.includes("EJScreen") || layerName.includes("CEJST") || layerName.includes("NEI_County") || layerName.includes("satellite") || layerName.includes("EPA_County")){
+//		} else if (layerName.includes("EJScreen") || layerName.includes("CEJST") || layerName.includes("NEI_County") ){
+            // If another layer is on, turn it off and toggle on new layer. If no layer is on, toggle on new layer. If turning off active layer, turn off
+
+            // regular action
+			var theLayer = toggleDatabase.find(layer => layer.name == layerName);
+			// draw the layer that has been selected with the drawLayer function
+            drawLayer(layerName);
+
+
+            // Find any other currently active EJ/CEJEST layer and turn it off:
+            findActiveLayer = active.filter(e => ((e.name.includes("EJScreen") || e.name.includes("CEJST") || e.name.includes("NEI_County") || e.name.includes("satellite") || e.name.includes("EPA_County")) && (e.name != layerName)));
+//            findActiveLayer = active.filter(e => ((e.name.includes("EJScreen") || e.name.includes("CEJST") || e.name.includes("NEI_County")) && !e.name.includes(layerName))); 
+            findActiveLayer.forEach(function(f){
+				drawLayer(f.name);
+                var switchArray = document.getElementsByName(f.name);
+                for(var i=0;i<switchArray.length;i++){
+                    switchArray[i].checked = false;
+                }
+
+   			});
+			// check if turning that layer on or off. If toggle = true, toggle off every layer of greater order, then toggle it back on again:
+			if(theLayer.toggle) { 
+				active.filter(e => e.layerOrder > theLayer.layerOrder).forEach(function(f){
+						drawLayer(f.name);
+						drawLayer(f.name); 
+					});
+	        }
+
+			// populate legend table 
+            var activeFinal = toggleDatabase.filter(layer => layer.toggle == true);
+			makeLegend(activeFinal);
+
+
+        //Else, if it is not a base layer, send it to the drawLayer function to add it AND redraw the layers that sit above it
+		} else { 
+			var theLayer = toggleDatabase.find(layer => layer.name == layerName);
+			// draw the layer that has been selected with the drawLayer function
+			drawLayer(layerName);
+
+			// check if turning that layer on or off. If toggle = true, toggle off every layer of greater order, then toggle it back on again:
+			if(theLayer.toggle) { 
+				active.filter(e => e.layerOrder > theLayer.layerOrder).forEach(function(f){
+
+                        drawLayer(f.name);
+						drawLayer(f.name); 
+					});
+	        }
+
+			// populate legend table 
+            var activeFinal = toggleDatabase.filter(layer => layer.toggle == true);
+			makeLegend(activeFinal);
+		}
+    }
+
+	//second function builds out the components of the layer
+    function drawLayer(layerName){ 
+		var theLayer = toggleDatabase.find(layer => layer.name == layerName);
+        theLayer.toggle = !theLayer.toggle;
+
+		//If toggle has become true, then draw the layer, depending on its type
+        if(theLayer.toggle) {
+
+        	//Dane: This switch and embedded drawing code could be put into its own function and eventually .js file AJ: will do
+			switch(theLayer.type) {
+
+				case 'polyline':
+                    theLayer.leafletLayer =  L.geoJSON(theLayer.feature, {
+                        onEachFeature: makePop(theLayer.name,theLayer.type),
+                        style: function(feature){
+                            return {
+                                color: theLayer.color,
+                                weight:getWeight(feature.properties.VOLTAGE)
+                            };
+                        }
+                    });
+    				theLayer.leafletLayer.addTo(newMap);
+
+				break;
+
+				case 'polygon':
+
+					if (theLayer.name.includes("satellite")){
+                        var url_to_geotiff_file = "https://jordanab.github.io/tiffs/lapm25.tif";
+                        fetch(url_to_geotiff_file)
+                        .then(response => response.arrayBuffer())
+                        .then(arrayBuffer => {
+                            parseGeoraster(arrayBuffer).then(georaster => {
+
+                            const min = georaster.mins[0];
+                            const max = georaster.maxs[0];
+                            const range = georaster.ranges[0];
+
+                            var scale = chroma.scale(['#00429d', '#4771b2', '#73a2c6', '#a5d5d8', '#ffffe0', '#ffbcaf', '#f4777f', '#cf3759', '#93003a']);
+                            theLayer.leafletLayer = new GeoRasterLayer({
+                                georaster: georaster,
+                                opacity: 0.8,
+                                pixelValuesToColorFn: function(pixelValues) {
+                                        var pixelValue = pixelValues[0]; // there's just one band in this raster
+                                        if (pixelValue >= 12) return null;
+                                        // scale to 0 - 1 used by chroma
+                                        var scaledPixelValue = (pixelValue - min) / range;
+                                        var color = scale(scaledPixelValue).hex();
+                                        return color;
+                                        },
+                                });
+                                theLayer.leafletLayer.addTo(newMap);
+                            });
+                        });
+
+					} else if(theLayer.name.includes("stateBorder")) {
+						theLayer.leafletLayer =  L.geoJSON(theLayer.feature, {
+							style: {weight:theLayer.weight, color:theLayer.color, fillOpacity:theLayer.fillOpacity}
+						});
+
+                        theLayer.leafletLayer.addTo(newMap);
+                    } else if (theLayer.name.includes("EJScreen") || theLayer.name.includes("CEJST") || theLayer.name.includes("County")){ 
+                        var max = getMax(theLayer,theLayer.name);
+                        var min = getMin(theLayer,theLayer.name);
+
+                        theLayer.leafletLayer =  L.geoJSON(theLayer.feature, {
+							onEachFeature: makePop(theLayer.name,theLayer.type,theLayer.citation,theLayer.url),
+							style: function(feature){
+                                return {
+                                    color: theLayer.color,
+                                    fillColor: getColor(feature.properties.Quantity,theLayer.name, max, min),
+//									fillOpacity:theLayer.fillOpacity,
+                                    fillOpacity:getOpacity(feature.properties.Quantity,theLayer.name),
+									weight:1
+								};
+                            }
+						});
+                        theLayer.leafletLayer.addTo(newMap);
+
+					} else {
+						theLayer.leafletLayer =  L.geoJSON(theLayer.feature, {
+							onEachFeature: makePop(theLayer.name,theLayer.type),
+							style: {weight:theLayer.weight, color:'#000000', fillColor:theLayer.color, fillOpacity:theLayer.fillOpacity}
+						});
+                        theLayer.leafletLayer.addTo(newMap);
+					}
+
+				break;
+
+    			case 'point':
+					var markerCollection = [];
+					//Run through each feature in the layer's collection and make a marker icon or proportional circle
+					theLayer.feature.features.forEach(function(e){
+                        var popup = L.popup({className: 'custom-popup'});
+                        var popuptext = makePop(theLayer.name,theLayer.type);
+						popup.setContent(popuptext);
+
+                        if (radiusToUse == 'Quantity'){
+                                var radSize = e.properties[radiusToUse];
+                        } else {
+                            if (theLayer.name != 'SubstationsLA'){
+                                var radSize = e.properties[radiusToUse]*20; // emissions are about 10x smaller than fuel use, and scale was set for fuel use
+                            }
+                        }
+                        if (theLayer.name == 'SubstationsLA'){
+                                var radSize = e.properties['Quantity'];
+                                var minSize = 3;
+                                var maxSize = 10;
+                        } else if (theLayer.name.includes('Facilities')) {
+                                var minSize = 7;
+                                var maxSize = 30;
+                        } else { // units
+                                var minSize = 2;
+                                var maxSize = 1000000;
+                        }
+
+                        if (theLayer.iconFile == 'none'){
+                            var markerObject = new L.geoJSON(e, {	
+			                pointToLayer: (e, latlng) => {			
+				                return new L.circleMarker([e.properties.Latitude, e.properties.Longitude], 
+					            {radius: Math.min(Math.max(radSize/theLayer.scale*newMap._zoom/8,minSize*newMap._zoom/8),maxSize),
+					            fillColor: theLayer.color,
+					            color: '#000000',
+					            weight: 1,
+					            opacity: 0.5,
+    					        fillOpacity: 0.5
+                                });
+        			        },
+        			        onEachFeature: function (e, layer) {
+                                layer.bindPopup(popup, {minWidth: 300});
+        			        }
+		                });
+
+                        } else {
+							var myIcon = L.icon({
+								iconUrl: "Icons/"+theLayer.iconFile,
+								iconSize: Math.min(Math.max(3*radSize/theLayer.scale*newMap._zoom/4,minSize*newMap._zoom/4),maxSize*newMap._zoom/4),
+                                popupAnchor:  [0, -10] // point from which the popup should open relative to the iconAnchor
+							});
+                            var markerObject = new L.geoJSON(e, {	
+			                pointToLayer: (e, latlng) => {			
+				                return new L.marker([e.properties.Latitude, e.properties.Longitude], { icon: myIcon });
+        			        },
+        			        onEachFeature: function (e, layer) {
+                                layer.bindPopup(popup, {minWidth: 300});
+        			        }
+		                });
+                        }
+                        markerCollection.push(markerObject);
+					});
+
+    				//Save this marker collection to the layer object within the toggleDatabase
+					theLayer.leafletLayer =  markerCollection;
+
+					//Add layer to map
+					theLayer.leafletLayer.forEach(function(e){
+						e.addTo(newMap);
+					});
+
+				break;
+			}
+
+		//If toggle has become not true, then remove the layer from leaflet
+		} else {
+			//Remove layer from map
+			if(theLayer.type == "point"){
+				theLayer.leafletLayer.forEach(function(e){
+					newMap.removeLayer(e);
+				});
+
+			} else {
+				newMap.removeLayer(theLayer.leafletLayer);
+			};
+		};
+	};
+
+    function getWeight(q){
+        return q > 345 ? 6 :
+           q > 138 ? 5 :
+           q > 69 ? 4 :
+           q > 0 ? 3 :
+           2;
+    }
+
+    function getMax(layer,prop){
+        var max = -10000000;
+        if(layer.name == "DPF_CEJST"){
+            max = 5833.3333;
+        } else {
+            for (var i=0 ; i<layer.feature.features.length ; i++) {
+                max = Math.max(parseFloat(layer.feature.features[i]["properties"]["Quantity"]), max);
+            }
+        }
+    return max;
+    }
+    function getMin(layer,prop){
+        var min = 100000000;
+        for (var i=0 ; i<layer.feature.features.length ; i++) {
+            if(parseInt(layer.feature.features[i]["properties"]["Quantity"]) != -10000000){
+                min = Math.min(parseFloat(layer.feature.features[i]["properties"]["Quantity"]), min);
+            }
+        }
+    return min;
+    }
+
+    function getColor(q,t, max, min){
+        if(t.includes("NEI_County")){
+            col = ['#8c2d04','#d94801','#f16913','#fd8d3c','#fdae6b','#fdd0a2','#fee6ce','#fff5eb',,'#808080'];
+        } else if(t.includes("EPA_County")){
+            col = ['#ca2b2b','#c61741','#bc0b54','#ae1266','#9b1f74','#842b7f','#693486','#4a3a88','#808080'];
+        } else {
+    		col = ['#f46d43','#fdae61','#fee08b','#ffffbf','#d9ef8b','#a6d96a','#66bd63','#1a9850','#808080'];
+        }
+        ranges = makeArr(min, max, 8)
+        return q >= ranges[6] ? col[0] :
+           q > ranges[5]  ? col[1] :
+           q > ranges[4]  ? col[2] :
+           q > ranges[3]  ? col[3] :
+           q > ranges[2]  ? col[5] :
+           q > ranges[1]  ? col[6] :
+           q >= ranges[0]  ? col[7] :
+                      col[8];
+	}
+    function getOpacity(q,t){
+        if(q <= -1000){
+            return 0.2; //consider making this zero
+        } else {
+            return 0.75;
+        }
+	}
+
+    function makeArr(startValue, stopValue, cardinality) {
+        var arr = [];
+        var step = (stopValue - startValue) / (cardinality - 1);
+        for (var i = 0; i < cardinality; i++) {
+            arr.push(startValue + (step * i));
+        }
+    return arr;
+}
+
+</script>
+
+
+<!---Build pop-ups-------------------------------------------------------------------------------------------------------->
+<script>
+    function capitalize(word) {
+        return word[0].toUpperCase() + word.slice(1).toLowerCase();
+    }
+
+    function makePop(name,type){
+
+        return function onEachFeature(feature, layer) { //This is a JS closure
+
+            if(type == 'point'){
+
+                if(feature.feature.properties.OtherDescriptor == "Do not use"){
+                    var otherdesc = "";
+                } else {
+                    if(name == "PM25red" || name == "PM25new"){
+                        //console.log(feature.feature.properties.Other.Number.toLocaleString(undefined,{maximumFractionDigits: 0,minimumFractionDigits: 0}))
+                        var otherdesc = feature.feature.properties.OtherDescriptor + ": " + feature.feature.properties.Other.toLocaleString(undefined,{maximumFractionDigits: 0,minimumFractionDigits: 0});
+                        var titledesc = feature.feature.properties.Name;
+                    } else if(name == "PM25PurpleAir"){
+                        var otherdesc = feature.feature.properties.OtherDescriptor + ": " + feature.feature.properties.Other.toLocaleString(undefined,{maximumFractionDigits: 1,minimumFractionDigits: 1});
+                        var titledesc = "Sensor #" + feature.feature.properties.Name + ", 2020";
+                    } else if(name == "PM25NEI"){
+                        var otherdesc = feature.feature.properties.OtherDescriptor + ": " + feature.feature.properties.Other;
+                        var titledesc = feature.feature.properties.Name;
+                    } else {
+                        var otherdesc = feature.feature.properties.OtherDescriptor + ": " + feature.feature.properties.Other;
+                        var titledesc = feature.feature.properties.Name + " Monitor, 2020"
+                    }
+                }
+
+                if(feature.feature.properties.QuantityDescriptor == "Do not use"){
+                    var quantdesc = "";
+                } else if(name.includes("PM25")){
+                    var quantdesc = feature.feature.properties.QuantityDescriptor + ": " + feature.feature.properties.Quantity.toLocaleString(undefined,{maximumFractionDigits: 1,minimumFractionDigits: 1});
+                } else {
+                    var quantdesc = feature.feature.properties.QuantityDescriptor + ": " + feature.feature.properties.Quantity.toLocaleString(undefined,{maximumFractionDigits: 0,minimumFractionDigits: 0});
+                }
+
+                var popuptext = 
+                    "<table><tr><td colspan=2><b>" + titledesc + "</b></td></tr>" +
+                        "<tr><td>" + otherdesc + "</td></tr>" +
+                        "<tr><td>" + quantdesc + "</td></tr>" + 
+                        "</table>";
+
+                if(name == "AQIAirNow"){
+                    var otherdesc1 = "Days with moderate AQI: " + feature.feature.properties.DaysMod;
+                    var otherdesc2 = "Days with unhealthy AQI for sensitive groups: " + feature.feature.properties["DaysUn"];
+
+                    popuptext = popuptext +
+                    "<table><tr><td>" + otherdesc1 + "</td></tr>" +
+                    "<tr><td>" + otherdesc2 + "</td></tr></table>" +
+                    "<br><table class='AQItable' cellpadding='4'><tr><td class='AQItable'><strong>AQI</strong></td><td class='AQItable'><strong>Interpretation</strong></td></tr>"+
+                                "<tr><td class='AQItable'>0-50</td><td class='AQItable'>Good</td></tr>"+
+                                "<tr><td class='AQItable'>51-100</td><td class='AQItable'>Moderate</td></tr>"+
+                                "<tr><td class='AQItable'>101-150</td><td class='AQItable'>Unhealthy for Sensitive Groups</td></tr>"+
+                                "<tr><td class='AQItable'>151-200</td><td class='AQItable'>Unhealthy</td></tr>"+
+                                "<tr><td class='AQItable'>201-300</td><td class='AQItable'>Very Unhealthy</td></tr>"+
+                                "<tr><td class='AQItable'>301 and up</td><td class='AQItable'>Hazardous</td></tr>" +
+                                "</table>";
+                }
+
+            } else { 
+           	var popup = L.popup({className: 'custom-popup'});
+			var num = /\d+/;
+						
+                if(name.includes("Highway")){
+                    var popuptext =
+                        "<table><tr><td colspan=2><b>" + feature.properties.OWNER + "</b></td></tr>" +
+                        "<tr><td>Transmission line type:</td><td>" + feature.properties.TYPE + "</td></tr>" +
+                        "</table>";
+                } else if(name == 'railroads_LA'){
+
+                    var popuptext =
+                        "<table><tr><td colspan=2><b>Louisiana Railroads</b></td></tr></table>";
+   
+                } else if(name == 'AQI_EPA_County'){
+                    var title = "Annual AQI ("+feature.properties.NAMELSAD+"), 2020"
+                        feature.properties.QuantityDescriptor = 'Median AQI'
+                        var quantdesc = feature.properties.QuantityDescriptor + ": " + feature.properties.Quantity.toLocaleString(undefined,{maximumFractionDigits: 0,minimumFractionDigits: 0});
+                        var otherdesc = "Max. AQI: " + feature.properties["EPA_AQI_LA counties_2020_Max AQI"];
+                        var otherdesc1 = "Days with moderate AQI: " + feature.properties.EPA_AQI_LA_counties_2020_Moderate_Days;
+                        var otherdesc2 = "Days with unhealthy AQI for sensitive groups: " + feature.properties["EPA_AQI_LA counties_2020_Unhealthy for Sensitive Groups Days"];
+
+
+                        var popuptext = 
+                            "<table><tr><td colspan=2><b>" + title + "</b></td></tr>" +
+                                "<tr><td>" + otherdesc + "</td></tr>" +
+                                "<tr><td>" + quantdesc + "</td></tr>" + 
+                                "<tr><td>" + otherdesc1 + "</td></tr>" +
+                                "<tr><td>" + otherdesc2 + "</td></tr></table><br>" +
+                                "<table class='AQItable' cellpadding='4'><tr><td class='AQItable'><strong>AQI</strong></td><td class='AQItable'><strong>Interpretation</strong></td></tr>"+
+                                "<tr><td class='AQItable'>0-50</td><td class='AQItable'>Good</td></tr>"+
+                                "<tr><td class='AQItable'>51-100</td><td class='AQItable'>Moderate</td></tr>"+
+                                "<tr><td class='AQItable'>101-150</td><td class='AQItable'>Unhealthy for Sensitive Groups</td></tr>"+
+                                "<tr><td class='AQItable'>151-200</td><td class='AQItable'>Unhealthy</td></tr>"+
+                                "<tr><td class='AQItable'>201-300</td><td class='AQItable'>Very Unhealthy</td></tr>"+
+                                "<tr><td class='AQItable'>301 and up</td><td class='AQItable'>Hazardous</td></tr>" +
+                                "</table>";
+
+                    } else {
+                    if(name.includes("CEJST")){
+                        var title = "CEJST Data"
+                        var locdesc = feature.properties.CF
+                    } else if(name.includes("EJScreen")){
+                        var title = "EJScreen Data"
+                        var locdesc = ""
+                    } else if(name.includes("NEI_County")){
+                        var title = "NEI Nonpoint Source Data"
+                        var locdesc = feature.properties.NAME + " Parish"
+                    } else if(name.includes("DAC")){
+                        var title = "Disadvantaged Communities (as identified in CEJST)"
+                        var locdesc = feature.properties.CF
+                    } else {
+                        var title = ""
+                    }
+
+                    if(feature.properties.Quantity == -10000000){
+                        var quantdesc = "Data not available for this area";
+                    } else if(name == "PM25_EJScreen"){
+                        var quantdesc = feature.properties.QuantityDescriptor + ": " + feature.properties.Quantity.toLocaleString(undefined,{maximumFractionDigits: 1,minimumFractionDigits: 1});
+                    } else if(name == "DSLPM_EJScreen"){
+                        var quantdesc = feature.properties.QuantityDescriptor + ": " + feature.properties.Quantity.toLocaleString(undefined,{maximumFractionDigits: 2,minimumFractionDigits: 2});
+                    } else {
+                        var quantdesc = feature.properties.QuantityDescriptor + ": " + feature.properties.Quantity.toLocaleString(undefined,{maximumFractionDigits: 0,minimumFractionDigits: 0});
+                    }
+
+                    var popuptext = 
+                    "<table><tr><td colspan=2><b>" + title + "</b></td></tr>" +
+                        "<tr><td>" + locdesc + "</td></tr>" + 
+                        "<tr><td>" + quantdesc + "</td></tr>" + 
+                        "</table>";
+                }
+
+                popup.setContent(popuptext);
+                
+                if(!name.includes("Highway")){ //No popups for highway yet til you finalize that layer
+                    layer.bindPopup(popup, {minWidth: 300});
+                }
+
+            }
+        return popuptext;
+	    }
+    return popuptext;
+    }
+
+</script>
+
+
+<!---set quantity for icon or circle size------------------------------------------------------------------------------------>
+<script>
+	var radiusToUse = "Quantity" //defaults to fuel use, which is called Quantity here
+
+    function quantitySwitch() {
+        if (radiusToUse == "Quantity"){
+            radiusToUse = "EmissionstCO2e";
+            activateLayer('base');
+        } else {
+            radiusToUse = "Quantity";
+            activateLayer('base');
+        }
+    }
+  
+</script>
+
+
+<!---Build legend--------------------------------------------------------------------------------------------------------->
+<script>
+	function makeLegend(active){
+		
+        var myTableDiv = document.getElementById("legendEntries");
+
+        while(myTableDiv.firstChild){ //Clear out earlier versions of table
+            myTableDiv.removeChild(myTableDiv.firstChild);
+        }
+
+                var j = 1
+                var rows = "<TR>";
+                var low = 0;
+				active.sort((a,b)=>(a.layerOrder > b.layerOrder) ? -1:1); //re-using layer order to sort the order of the legend
+                active.forEach(function(f){
+                if (displayProperties[f.name].legendEntry != 'none'){ //Layers have legend entries
+                    if(f.name.includes("DACs")){
+                        rows += "<td><span class='square-button2' style='background: "+displayProperties[f.name].color+";'></span></td>"+
+                        "<td class='entryLabel'>"+displayProperties[f.name].legendEntry+"</td>";
+                        j++;
+                    } else if(displayProperties[f.name].iconFile == 'none') {
+                        rows += "<td width='15px'><span class='round-button' style='background: "+displayProperties[f.name].color+";'></span></td>"+
+                        "<td class='entryLabel'>"+displayProperties[f.name].legendEntry+"</td>";
+                        j++;
+                    } else {
+                        rows += "<td class='icon'><img src='Icons/"+displayProperties[f.name].iconFile+"' height=18px width=18px></td>"+
+                            "<td class='entryLabel'>"+displayProperties[f.name].legendEntry+"</td>";
+                        j++;
+                    }
+                    if(j%3 == 1){ //Start new row
+                        rows += "</TR><TR>";
+                    }
+                } else { //all other layers
+                    rows += "</TR><TR>";
+                    if(f.name.includes("NEI_County")){
+                        col = ['#8c2d04','#d94801','#f16913','#fd8d3c','#fdae6b','#fdd0a2','#fee6ce','#fff5eb',,'#808080'];
+                        var max = getMax(f,f.name).toLocaleString(undefined,{maximumFractionDigits:0});
+                        var min = getMin(f,f.name).toLocaleString(undefined,{maximumFractionDigits:0});
+                    } else if(f.name.includes("satellite")){
+                        col = ['#93003a','#cf3759','#f4777f','#ffbcaf','#ffffe0','#a5d5d8','#73a2c6','#4771b2','#00429d']; //This is inverted from entry in chroma.scale
+                        var max = 11.6;
+                        var min = 4;
+                    } else if(f.name.includes("EPA_County")){
+                        col = ['#ca2b2b','#c61741','#bc0b54','#ae1266','#9b1f74','#842b7f','#693486','#4a3a88','#808080'];
+                        var max = getMax(f,f.name);
+                        var min = getMin(f,f.name);
+                    } else {
+                		col = ['#f46d43','#fdae61','#fee08b','#ffffbf','#d9ef8b','#a6d96a','#66bd63','#1a9850','#808080'];
+                        if(f.name.includes("DPF")){
+                            var max = "5000+";
+                        } else {
+                            var max = getMax(f,f.name);
+                        }
+                        var min = getMin(f,f.name);
+                    }
+
+                    rows += "<td colspan=9><span class='square-label'>"+min.toLocaleString(undefined,{maximumFractionDigits:2})+"&nbsp;</span>"+
+                        "<span class='square-button' style='background: "+col[6]+";'></span>"+
+                        "<span class='square-button' style='background: "+col[5]+";'></span>"+
+                        "<span class='square-button' style='background: "+col[4]+";'></span>"+
+                        "<span class='square-button' style='background: "+col[3]+";'></span>"+
+                        "<span class='square-button' style='background: "+col[2]+";'></span>"+
+                        "<span class='square-button' style='background: "+col[1]+";'></span>"+
+                        "<span class='square-button' style='background: "+col[0]+";'></span>"+
+                        "<span class='square-label'>&nbsp;"+max.toLocaleString(undefined,{maximumFractionDigits:2})+"</span>"+
+                    "<span style='display: inline-block;'>&nbsp;&nbsp;&nbsp;"+f.feature.features[0].properties.QuantityDescriptor+"</span></td>";
+                }
+
+                });
+
+                // rows += "<td class='icon'><img src='WebMapIcons/OtherRoad_White.svg' height=10px width=20px></td>"+
+                //         "<td class='entryLabel'>Other Roads</td>";;
+                rows += "</TR>";
+                myTableDiv.innerHTML += rows;
+    }
+
+    </script>
+    <script>
+
+    let plainLanguageSummaries = {
+        "info_Year": {"title": "","text":"The <a target='blank' href='https://www.epa.gov/air-emissions-inventories/national-emissions-inventory-nei'>National Emissions Inventory (NEI)</a> is released by the EPA every three years. LOCAETA is currently based on the 2020 NEI, and all other measurements are taken from 2020 unless otherwise noted. In the future, additional yearly options will be available in this dropdown menu."},
+        "info_layerOptions": {"title": "Pre-set layer options","text":"Choose from pre-set layer combinations that help illuminate various aspects of the effects of industrial emissions on communities and the co-benefits of decarbonization.<p>Note that some layer combinations are not possible. Satellite data and certain other solid spatial layers are only shown one-at-a-time for clarity."},        
+        "info_PM25": {"title": "PM<sub>2.5</sub> observations","text":"Particulate matter (PM) of size 2.5 is composed of very fine particles smaller than 2.5 micrometers in diameter. PM<sub>2.5</sub> includes dust, dirt, soot, smoke, and drops of liquid. These very fine particles can come from car exhaust, wood-fired stoves, wildfires, industrial facilities, power plants, and many other sources.<p>Breathing air polluted with PM<sub>2.5</sub> <a target='blank' href='https://www.epa.gov/pmcourse/particle-pollution-exposure'>can be harmful to your health</a> and cause higher rates of diabetes, strokes, lung cancer, birth defects, and nonfatal heart attacks. PM<sub>2.5</sub> often affects children and the elderly more than healthy adults; these are considered <a target='blank' href='https://www.epa.gov/pmcourse/particle-pollution-exposure#groups'>groups sensitive to particulate matter pollution,</a> along with people with heart and lung disease, diabetes, and other vulnerable populations.<p><i>LOCAETA</i> shows the annual median value of PM<sub>2.5</sub>. Using the median values is often preferred for data that are not normally distributed and are skewed in one direction. These values may not convey the health risks for an individual in a community that receives long stretches of poor air quality separated by stretches of good air quality throughout the year. See the health, environmental, and socioeconomic layers for a clearer depiction of health risks experienced by communities."},
+        "info_satellitePM25": {"title": "Satellite PM<sub>2.5</sub> data","text":"The PM<sub>2.5</sub> data displayed here are calculated from observations from multiple satellites, processed using a model from <a target='blank' href='https://sites.wustl.edu/acag/datasets/surface-pm2-5/'>Washington University's Atmospheric Composition Analysis Group.</a>. The model results are validated using on-the-ground measurements.<P>The data shown here represent a yearly average of observed and modeled PM<sub>2.5</sub>. These values may not convey the health risks for an individual in a community that receives long stretches of poor air quality separated by stretches of good air quality throughout the year. See the health, environmental, and socioeconomic layers for a clearer depiction of health risks experienced by communities."},
+        "info_PM25AirNow": {"title": "AirNow PM<sub>2.5</sub> measurements","text":"<a target='blank' href='https://gispub.epa.gov/airnow/?monitors=pm25&contours=none&xmin=-10374797.849146878&xmax=-9787761.471917009&ymin=3359000.3421038524&ymax=3661385.2259998643'>AirNow</a> is a website with a series of air quality monitors operated by the EPA to measure ozone and PM<sub>2.5</sub>, which are combined with modeling to produce nationwide air quality information.<p><i>LOCAETA</i> shows the annual median value of PM<sub>2.5</sub> measured throughout the year at these stations. Using the median values is often preferred for data that are not normally distributed and are skewed in one direction. These values may not convey the health risks for an individual in a community that receives long stretches of poor air quality separated by stretches of good air quality throughout the year. See the health, environmental, and socioeconomic layers for a clearer depiction of health risks experienced by communities."},
+        "info_PM25PurpleAir": {"title": "PurpleAir PM<sub>2.5</sub> measurements","text":"<a target='blank' href='https://map.purpleair.com/1/mPM25/a10/p604800/cC0#7.14/31.11/-92.491'>PurpleAir</a> is a private company that produces low-cost air quality sensors that measure PM<sub>2.5</sub>. While similar to AirNow, the PurpleAir monitors are made differently and typically measure more PM<sub>2.5</sub> than the EPA sensors. The 2020 maximum for a sensor can be found by clicking on the sensor for additional information.<p><i>LOCAETA</i> shows the annual median value of PM<sub>2.5</sub> measured throughout the year at these stations. Using the median values is often preferred for data that are not normally distributed and are skewed in one direction. These values may not convey the health risks for an individual in a community that receives long stretches of poor air quality separated by stretches of good air quality throughout the year. See the health, environmental, and socioeconomic layers for a clearer depiction of health risks experienced by communities."},
+        "info_AQI": {"title": "Annual Air Quality Index (AQI)","text":"The impact of air quality is often measured using the <a target='blank' href='https://www.epa.gov/pmcourse/patient-exposure-and-air-quality-index#what'>air quality index (AQI).</a> The AQI considers high levels of individual pollutants and calculates how unhealthy the air is based on the pollutant with the largest measured quantity. The EPA designates days as Good (AQI 0-50), Moderate (51-100), Unhealthy for Sensitive Groups (101-150), Unhealthy (151-200), Very Unhealthy (201-300), and Hazardous (301 and higher). For more information on AQI, how it is calculated, and how it impacts our health, please see AirNow’s <a target='blank' href='https://www.airnow.gov/aqi/aqi-basics/'>AQI Basics</a>.<p><i>LOCAETA</i> shows the annual median value of AQI. Using the median values is often preferred for data that are not normally distributed and are skewed in one direction. These values may not convey the health risks for an individual in a community that receives long stretches of poor air quality separated by stretches of good air quality throughout the year. See the health, environmental, and socioeconomic layers for a clearer depiction of health risks experienced by communities."},
+        "info_AQIAirNow": {"title": "Median Air Quality Index (AQI)","text":"Air pollutant and air quality index (AQI) measurements for each individual monitoring station are collected from <a target='blank' href='https://www.epa.gov/aqs'>EPA's Air Quality System</a>. These monitors measure a variety of criteria pollutants and are reported as daily averages. Not all monitoring stations report every day, and some report every other day or every third day. The 2020 maximum for a sensor can be found by clicking on the sensor for additional information.<p>The EPA designates days as Good (AQI 0-50), Moderate (51-100), Unhealthy for Sensitive Groups (101-150), Unhealthy (151-200), Very Unhealthy (201-300), and Hazardous (301 and higher). <p><i>LOCAETA</i> shows the annual median value of AQI measured throughout the year at these stations. Using the median values is often preferred for data that are not normally distributed and are skewed in one direction. These values may not convey the health risks for an individual in a community that receives long stretches of poor air quality separated by stretches of good air quality throughout the year. See the health, environmental, and socioeconomic layers for a clearer depiction of health risks experienced by communities."},
+        "info_AQI_EPA_County": {"title": "Median Air Quality Index (AQI) (county-level)","text":"Multiple air quality monitors can be combined to understand air pollution at a county level. A county-level air quality index (AQI) shown in <i>LOCAETA</i> is aggregated by the <a target='blank' href='https://www.epa.gov/aqs'>EPA's Air Quality System</a>.<p>The EPA designates days as Good (AQI 0-50), Moderate (51-100), Unhealthy for Sensitive Groups (101-150), Unhealthy (151-200), Very Unhealthy (201-300), and Hazardous (301 and higher).<p><i>LOCAETA</i> shows the annual median value of AQI measured throughout the year in these counties. Using the median values is often preferred for data that are not normally distributed and are skewed in one direction. These values may not convey the health risks for an individual in a community that receives long stretches of poor air quality separated by stretches of good air quality throughout the year. See the health, environmental, and socioeconomic layers for a clearer depiction of health risks experienced by communities."},
+        "info_DACs": {"title": "Disadvantaged Communities","text":"Local areas may be considered <a target='blank' href='https://screeningtool.geoplatform.gov/en/methodology'>Disadvantaged Communities (DACs)</a> by the definitions of the Climate and Economic Justice Screening Tool (CEJST) if they are: <ol type='1'><li>Within the boundaries of Federally Recognized Tribes, or</li><li>At or above the threshold for one or more environmental, climate, or other burdens and at or above the threshold for associated socioeconomic burdens.</li></ol><p>Communities can also be designated as disadvantaged if they are surrounded by disadvantaged communities and are at or below the 50th percentile for income (or above the 50th percentile for being low income).<p>Environmental, climate, and other burdens include:<ul><li><b>Climate Change:</b> Are at or above the 90th percentile for expected agricultural loss rate OR expected building loss rate OR expected population loss rate OR projected flood risk OR projected wildfire risk.</li><li><b>Energy:</b> Are at or above the 90th percentile for energy cost OR PM<sub>2.5</sub> in the air.</li><li><b>Health:</b> Are at or above the 90th percentile for asthma OR diabetes OR heart disease OR low life expectancy.</li><li><b>Housing:</b> Experienced historic underinvestment OR are at or above the 90th percentile for housing cost OR lack of green space OR lack of indoor plumbing OR lead paint.</li><li><b>Legacy Pollution:</b> Have at least one abandoned mine land OR Formerly Used Defense Sites OR are at or above the 90th percentile for proximity to hazardous waste facilities OR proximity to Superfund sites OR proximity to Risk Management Plan (RMP) facilities.</li><li><b>Transportation:</b> Are at or above the 90th percentile for diesel particulate matter exposure OR transportation barriers OR traffic proximity and volume.</li><li><b>Water and wastewater:</b> Are at or above the 90th percentile for underground storage tanks and releases OR wastewater discharge.</li><li><b>Workforce development:</b> Are at or above the 90th percentile for linguistic isolation OR low median income OR poverty OR unemployment AND more than 10% of people ages 25 or older whose high school education is less than a high school diploma.</li></ul>"},
+        "info_NationalHighwaySystem": {"title": "National Highway System","text":"The <a target='blank' href='https://www.fhwa.dot.gov/ohim/onh00/onh2p6.htm'>National Highway System</a> is a network of 161,188 miles of roads designated as nationally significant by Congress, including the U.S. Interstate System and other major roads. Highways and major roadways contribute to particulate matter pollution from use of internal combustion engines in cars, trucks, and other vehicles."},
+        "info_railroads_LA": {"title": "U.S. Railroads","text":"The <a target='blank' href='https://geodata.bts.gov/datasets/d83e85154a304da995837889cc4012e3_0/explore'>North American Rail Network</a> database includes all rail lines in the U.S., Canada, and Mexico, and is maintained by the U.S. Department of Transportation. Most rail locomotives use diesel internal combustion engines, which contribute to particulate matter pollution. See the Transportation and Diesel PM layer options to see where the highest impacts are."},
+        "info_PM25_EJScreen": {"title": "EJScreen PM<sub>2.5</sub>","text":"PM<sub>2.5</sub> is pollution composed of very small particles that can negatively affect human health. It has a variety of natural and human-caused sources. This PM<sub>2.5</sub> layer is obtained from the EPA’s <a target='blank' href='https://www.epa.gov/ejscreen'>EJScreen</a>.<p>EJScreen combines on-the-ground air quality monitors with a complex chemistry model (<a target='blank' href='https://www.epa.gov/cmaq/cmaqs-purpose'>Community Multiscale Air Quality, or CMAQ</a>) to estimate the annual average levels of this pollutant in the air at the census tract level. The data shown here were processed for EJScreen in 2019, and may differ from other PM<sub>2.5</sub> layers shown due to the timing of the data sources and underlying analysis. These values are used to highlight where PM<sub>2.5</sub> is highest throughout the US, and are a measure of potential exposure, not of risk. It also does not tell us if an area is meeting national ambient air quality standards for PM<sub>2.5</sub>.<p>For more information about EJScreen’s datasets, please see the <a target='blank' href='https://www.epa.gov/ejscreen/technical-information-about-ejscreen'>technical documentation</a> (<a target='blank' href='https://www.epa.gov/system/files/documents/2023-06/ejscreen-tech-doc-version-2-2.pdf'>pdf download</a>)."},
+        "info_P_CANCER_EJScreen": {"title": "Air toxics cancer risk","text":"This is the estimated lifetime cancer risk from inhalation of carcinogens in the air. This layer is obtained from <a target='blank' href='https://www.epa.gov/ejscreen'>EJScreen</a>. The reported values are converted into percentiles nationwide based on how many people in a million will develop cancer due to these pollutants over 70 years. The EPA states that the 35th percentile corresponds to 30 cases per million people, while the 84th percentile corresponds to 40 cases per million people. Cancer risks in the 95th percentile have raw values from 50–2000 cases per million people.<p>The EJScreen data come from the 2019 <a target='blank' href='https://www.epa.gov/AirToxScreen/airtoxscreen-mapping-tool'>AirToxScreen</a>. For more information about EJScreen’s datasets, please see the <a target='blank' href='https://www.epa.gov/ejscreen/technical-information-about-ejscreen'>technical documentation</a> (<a target='blank' href='https://www.epa.gov/system/files/documents/2023-06/ejscreen-tech-doc-version-2-2.pdf'>pdf download</a>)."},
+        "info_P_RESP_EJScreen": {"title": "Air toxics respiratory hazard index","text":"The air toxics respiratory hazard index layer is obtained from <a target='blank' href='https://www.epa.gov/ejscreen'>EJScreen</a> and shows how likely it is that pollutants in the air will affect human health. A low hazard index means air toxics are unlikely to cause harmful non-cancer health effects over a lifetime of exposure. A high hazard index does not necessarily mean adverse non-cancer effects will occur, but that they are more likely to occur than areas with a lower one. In this layer, raw hazard indices are converted into percentiles to show risk relative to the rest of the nation.<p>The EJScreen data come from the 2019 <a target='blank' href='https://www.epa.gov/AirToxScreen/airtoxscreen-mapping-tool'>AirToxScreen</a>. For more information about EJScreen’s datasets, please see the <a target='blank' href='https://www.epa.gov/ejscreen/technical-information-about-ejscreen'>technical documentation</a> (<a target='blank' href='https://www.epa.gov/system/files/documents/2023-06/ejscreen-tech-doc-version-2-2.pdf'>pdf download</a>)."},
+        "info_P_LIFEEXPP_EJScreen": {"title": "Low life expectancy percentile","text":"These data show areas that have a higher percentage chance of lower life expectancies. They are shown as percentiles to compare life expectancies relative to the rest of the nation. The higher the value, the lower the estimated life expectancy is. This layer is obtained from <a target='blank' href='https://www.epa.gov/ejscreen'>EJScreen</a>.<p>The underlying data are provided by the <a target='blank' href='https://www.census.gov/programs-surveys/acs/data/data-via-ftp.html'>US Census Bureau</a>. For more information about EJScreen’s datasets, please see the <a target='blank' href='https://www.epa.gov/ejscreen/technical-information-about-ejscreen'>technical documentation</a> (<a target='blank' href='https://www.epa.gov/system/files/documents/2023-06/ejscreen-tech-doc-version-2-2.pdf'>pdf download</a>)."},
+        "info_AF_PFS_CEJST": {"title": "Asthma among adults percentile","text":"These data show areas that have a higher occurrence of asthma. They are shown as percentiles to compare rates relative to the rest of the nation. This layer is obtained from the <a target='blank' href='https://screeningtool.geoplatform.gov/en/#3/33.47/-97.5'>Climate and Economic Justice Screening Tool (CEJST)</a>.<p>The total number of adults with asthma used by CEJST comes from the CDC PLACES dataset from 2016-2019, as described in the <a target='blank' href='https://screeningtool.geoplatform.gov/en/methodology#asthma'>CEJST methodology</a>. This poplation includes people who have had asthma, and those who currently have it."},
+        "info_DSLPM_EJScreen": {"title": "Diesel PM from EJScreen","text":"This layer shows the estimated amount of particulate matter in the air that comes from diesel engines (measured in micrograms per meter cubed, &#181;g/m<sup>3</sup>). Particulate matter is made up of solid particles and liquid droplets smaller than 10&#181;g, approximately 1/5 the width of a human hair. Particulate matter includes PM<sub>2.5</sub>.<p>Diesel emissions can affect <a target='blank' href='https://www.epa.gov/dera/learn-about-impacts-diesel-exhaust-and-diesel-emissions-reduction-act-dera'>human health and the environment</a> in many negative ways, including health conditions like asthma and lung disease. The 50th percentile, or median, value is 0.2162&#181;g/m<sup>3</sup> for the US.<p>This layer is obtained from <a target='blank' href='https://www.epa.gov/ejscreen'>EJScreen</a>. The EJScreen data come from the 2019 <a target='blank' href='https://www.epa.gov/AirToxScreen/airtoxscreen-mapping-tool'>AirToxScreen</a>. For more information about EJScreen’s datasets, please see the <a target='blank' href='https://www.epa.gov/ejscreen/technical-information-about-ejscreen'>technical documentation</a> (<a target='blank' href='https://www.epa.gov/system/files/documents/2023-06/ejscreen-tech-doc-version-2-2.pdf'>pdf download</a>)."},
+        "info_DPF_CEJST": {"title": "Population density","text":"Population density by census tract is calculated by total population from the <a target='blank' href= 'https://screeningtool.geoplatform.gov/en/#3/33.47/-97.5'>Climate and Economic Justice Screening Tool (CEJST)</a> and land area from the <a target='blank' href='https://www.census.gov/cgi-bin/geo/shapefiles/index.php?year=2010&layergroup=Census+Tracts'>U.S. Census</a>. <a target='blank' href='https://www.census.gov/programs-surveys/geography/about/glossary.html#par_textimage_13'>Census tracts</a> are small areas with approximately 4000 inhabitants which are used in the National Census every 10 years."},
+//        "info_P_PTRAF_EJScreen": {"title": "PM<sub>2.5</sub> observations","text":"Placeholder text"},
+        "info_P_DEMOGIDX_EJScreen": {"title": "Demographic vulnerability index","text":"This is the combined vulnerability index calculated by consideration of five vulnerability indicators: low life expectancy, low income, unemployment rate, limited English speaking, and less than high school education. This combined index offers a different perspective on community-level vulnerability nationwide and is used in decision-making considerations. The higher the percentile, the more burdens a community experiences and the more vulnerable it will be. This layer is obtained from <a target='blank' href='https://www.epa.gov/ejscreen'>EJScreen</a>. For more information about EJScreen’s datasets, please see the <a target='blank' href='https://www.epa.gov/ejscreen/technical-information-about-ejscreen'>technical documentation</a> (<a target='blank' href='https://www.epa.gov/system/files/documents/2023-06/ejscreen-tech-doc-version-2-2.pdf'>pdf download</a>)."},
+        "info_PM25NEI": {"title": "Facility PM<sub>2.5</sub> emissions","text":"The <a target='blank' href='https://www.epa.gov/air-emissions-inventories/national-emissions-inventory-nei'>National Emissions Inventory (NEI)</a> is a nationwide database of air pollutants that is collected every three years (most recent: 2020). Pollutants in the NEI include criteria air pollutants (CAPs: ozone, NO<sub>2</sub>, SO<sub>2</sub>, lead, VOCs, CO, and PM<sub>2.5</sub>) and hazardous air pollutants (HAPs: benzene, dioxin, etc.), and are reported by industrial and power facilities for individual processes, pieces of equipment, and smokestacks. Identifiable, single-emission sources are referred to as <i>point sources</i>. More numerous, spread-out emission sources are called <i>non-point sources</i>.<p>This data layer shows point sources of emissions reported to the 2020 NEI (as opposed to distributed, or nonpoint sources, such as roads or fires), at the facility level. Pollutants can be emitted from facilities through a variety of methods, including combustion, evaporation, and leaks."},
+        "info_OtherSources": {"title": "County-level PM<sub>2.5</sub> emissions estimates","text":"The <a target='blank' href='https://www.epa.gov/air-emissions-inventories/national-emissions-inventory-nei'>National Emissions Inventory (NEI)</a> includes county-level estimates of PM<sub>2.5</sub> emitted from sources such as fires, dust, and transportation. When evaluating PM pollution that is impacting a community, these non-industrial sources must also be considered. For more information, please see <a target='blank' href='https://www.epa.gov/air-emissions-inventories/national-emissions-inventory-nei'>the NEI website.</a> These emissions are the estimates from each source category."},
+        "info_Fires_NEI_County": {"title": "Fire-related PM<sub>2.5</sub> emissions","text":"These include emissions from major fires (such as wildfires, prescribed burns, and agricultural fires). Emissions are calculated using fire-detecting satellites, and information collected from government and forestry agencies. More information and data downloads can be found on <a target='blank' href='https://www.epa.gov/air-emissions-inventories/2020-nei-supporting-data-and-summaries'>the 2020 NEI Supporting Data website.</a>"},
+        "info_Dust_NEI_County": {"title": "Dust PM<sub>2.5</sub> emissions","text":"These include dust produced by construction and paved and unpaved roads, estimated by using data obtained from the Census Bureau. More information and data downloads can be found on <a target='blank' href='https://www.epa.gov/air-emissions-inventories/2020-nei-supporting-data-and-summaries'>the 2020 NEI Supporting Data website.</a>"},
+        "info_Ag_Dust_NEI_County": {"title": "Agricultural dust PM<sub>2.5</sub> emissions","text":"These emissions include dust produced from agricultural activities, such as field tilling, dust kicked up by livestock, livestock waste, and fertilizer application.  Agricultural dust is calculated using equations established by the EPA. More information and data downloads can be found on <a target='blank' href='https://www.epa.gov/air-emissions-inventories/2020-nei-supporting-data-and-summaries'>the 2020 NEI Supporting Data website.</a>"},
+        "info_Ind_Oil_Gas_Mining_NEI_County": {"title": "Oil, gas, mining PM<sub>2.5</sub> emissions","text":"These include emissions from processes associated with oil and gas activities, such as exploration, drilling, transportation, storage, and underground sources. More information and data downloads can be found on <a target='blank' href='https://www.epa.gov/air-emissions-inventories/2020-nei-supporting-data-and-summaries'>the 2020 NEI Supporting Data website.</a>"},
+        "info_Nonpoint_NEI_County": {"title": "Other nonpoint PM<sub>2.5</sub> sources","text":"These include emissions from sources that are generally too small to include in another category. Nonpoint sources are aggregated at a county level and include residential heating, asphalt paving, and commercial (non-industrial) heat and steam generation. There may be differences between how states choose to categorize emissions between point and nonpoint sources. More information and data downloads can be found on <a target='blank' href='https://www.epa.gov/air-emissions-inventories/2020-nei-supporting-data-and-summaries'>the 2020 NEI Supporting Data website.</a>"},
+        "info_Point_Sources_NEI_County": {"title": "Countywide point source PM<sub>2.5</sub> emissions","text":"These include emissions from larger sources that are fixed in one stationary location. These are generally large industrial facilities, electric power plants, and airports, as well as smaller industrial, non-industrial, and commercial facilities. Some states may also include very small sources such as dry cleaners, gas stations, and livestock facilities. In this dataset, the facilities are aggregated to the county level. More information and data downloads can be found on <a target='blank' href='https://www.epa.gov/air-emissions-inventories/2020-nei-supporting-data-and-summaries'>the 2020 NEI Supporting Data website.</a>"},
+        "info_Onroad_NEI_County": {"title": "Mobile - onroad PM<sub>2.5</sub> emissions","text":"These include tailpipe emissions from vehicles (such as cars, trucks, and heavy duty vehicles) that use fossil fuels (such as gasoline, diesel, and others) while they are driving on roads, highways, and idling. Louisiana uses a model from EPA to estimate on-road emissions. More information and data downloads can be found on <a target='blank' href='https://www.epa.gov/air-emissions-inventories/2020-nei-supporting-data-and-summaries'>the 2020 NEI Supporting Data website.</a>"},
+        "info_Nonroad_NEI_County": {"title": "Mobile - off-road PM<sub>2.5</sub> emissions","text":"These include emissions from off-road mobile sources that use fossil fuels (such as gasoline, diesel, and others). These sources include construction equipment, aircraft (while on the ground), trains, lawn and garden equipment, and boats and ships. Emissions estimates are produced from an EPA model. More information and data downloads can be found on <a target='blank' href='https://www.epa.gov/air-emissions-inventories/2020-nei-supporting-data-and-summaries'>the 2020 NEI Supporting Data website.</a>"},
+        "info_Marine_Loc_NEI_County": {"title": "Marine and locomotive PM<sub>2.5</sub> emissions","text":"These emissions include those from ships, boats, and trains. They are a subset of the non-road emissions category. These totals are estimated using the <a target='blank' href='https://marinecadastre.gov/ais/'>Automatic Identification System (AIS)</a> ship tracker and rail line activity data. More information and data downloads can be found on <a target='blank' href='https://www.epa.gov/air-emissions-inventories/2020-nei-supporting-data-and-summaries'>the 2020 NEI Supporting Data website.</a>"},
+        "info_Res_Fuel_Comb_NEI_County": {"title": "Residential fuel combustion PM<sub>2.5</sub> emissions","text":"These include the total emissions from combustion from nonpoint residential heating, including all fuel types (heating oil, natural gas, etc.). Most residential heating takes place in the residence, leading to numerous, distributed nonpoint sources. Some areas may have one large central district heating plant that will be categorized as a point source. More information and data downloads can be found on <a target='blank' href='https://www.epa.gov/air-emissions-inventories/2020-nei-supporting-data-and-summaries'>the 2020 NEI Supporting Data website.</a>"},
+        "info_Ind_Fuel_Comb_NEI_County": {"title": "Industrial fuel combustion PM<sub>2.5</sub> emissions","text":"These emissions are from nonpoint fuel combustion sources at industrial, commercial, and institutional facilities. These are generally smaller sources that are distributed (such as a building’s water heater, HVAC system, backup generator, etc.), as opposed to large central equipment that are reported as point sources. More information and data downloads can be found on <a target='blank' href='https://www.epa.gov/air-emissions-inventories/2020-nei-supporting-data-and-summaries'>the 2020 NEI Supporting Data website.</a>"},
+        "info_PM25red": {"title": "PM<sub>2.5</sub> Reductions Possible with Carbon Capture","text":"<a target='blank' href='https://netl.doe.gov/carbon-management/carbon-storage/faqs/carbon-storage-faqs'>Carbon capture and storage</a> is one mechanism that has been proposed to help heavy industry reduce its CO<sub>2</sub> emissions. Many of the techniques used to capture CO<sub>2</sub> require other pollutants, such as nitrogen oxides, sulfur oxides, and PM<sub>2.5</sub>, to be removed or lowered. Too much of these pollutants may cause the CO<sub>2</sub> capture system to not work properly or cause additional wear-and-tear. Reducing pollutants in the exhaust of these facilities is considered a <b>co-benefit</b> of installing a CO<sub>2</sub> capture system.<p>These PM<sub>2.5</sub> emission reduction estimates are produced by using capturable CO<sub>2</sub> streams from <i>CO<sub>2</sub>NCORD</i>, a tool developed by <a target='blank' href='https://www.carbonsolutionsllc.com/software/co2ncord/'>Carbon Solutions</a> to identify opportunities for carbon capture and to calculate the associated costs. Literature percentages are used to calculate the PM<sub>2.5</sub> reductions from equipment installed to operate a typical amine-based carbon capture system, which is the most established carbon capture technology.<p>The values displayed represent possible emissions <b>reduction amounts</b> for installing carbon capture on certain fossil fuel combustion sources, such as boilers, heaters, and ovens. When paired with current facility PM<sub>2.5</sub> emissions, you can compare historic values with the possible projected decrease in emissions from CCS on stationary combustion sources."},
+        "info_PM25new": {"title": "New PM<sub>2.5</sub> Emissions After Carbon Capture","text":"<a target='blank' href='https://netl.doe.gov/carbon-management/carbon-storage/faqs/carbon-storage-faqs'>Carbon capture and storage</a> is one mechanism that has been proposed to help heavy industry reduce its CO<sub>2</sub> emissions. Many of the techniques used to capture CO<sub>2</sub> require other pollutants, such as nitrogen oxides, sulfur oxides, and PM<sub>2.5</sub>, to be removed or lowered. Too much of these pollutants may cause the CO<sub>2</sub> capture system to not work properly or cause additional wear-and-tear. Reducing pollutants in the exhaust of these facilities is considered a <b>co-benefit</b> of installing a CO<sub>2</sub> capture system.<p>These projected future PM<sub>2.5</sub> emissions estimates are produced by using capturable CO<sub>2</sub> streams from <i>CO<sub>2</sub>NCORD</i>, a tool developed by <a target='blank' href='https://www.carbonsolutionsllc.com/software/co2ncord/'>Carbon Solutions</a> to identify opportunities for carbon capture and to calculate the associated costs. The values displayed represent possible emissions reductions for certain stationary combustion sources, such as those from some boilers, heaters, and ovens. Literature percentages for PM<sub>2.5</sub> reductions from typical carbon capture systems are used in the calculation."}
+    };
+
+
+    function showInfoPopup(infoName) {
+        //find active popups and hide
+        var allPopups = document.getElementsByClassName("popuptext");
+        Array.prototype.forEach.call(allPopups, function(pop) {
+            if (pop.id != infoName){
+                pop.classList.toggle("show",false);
+            }
+        });
+ 
+        var popup = document.getElementById(infoName);
+        popup.classList.toggle("show");
+        popup.innerHTML = "<span class='infoPopupHeader'><b>"+ plainLanguageSummaries[infoName].title +
+            "</b></span><span class='closeBox'><img src='Icons/close_black.svg' height='12px'></span><p>" + 
+                plainLanguageSummaries[infoName].text;
+    }
+
+</script>
+
+
+<script>
+    var a = document.getElementById('layerOptions');
+    a.addEventListener('change', function() {
+        toggleLayers(this.value);
+        a.selectedIndex = 0;
+    }, false);
+
+    function toggleLayers(which){
+        switch(which){
+            case 'toggleOff':
+            var layersKeep=[];
+            break;
+        case 'compareDecarb':
+            var layersKeep=['PM25red','PM25NEI'];
+            break;
+        case 'allTransport':
+            var layersKeep=['DSLPM_EJScreen','NationalHighwaySystem',"railroads_LA"];
+            break;
+        case 'healthEffects':
+            var layersKeep=['P_CANCER_EJScreen','PM25NEI'];
+            break;
+        case 'allObservations':
+            var layersKeep=['PM25AirNow','PM25PurpleAir','satellitePM25'];
+            break;
+        case 'others':
+            break;
+        }
+        var active = toggleDatabase.filter(layer => layer.toggle == true); //Collection of active layerInfo objects
+        active.forEach(function(f){
+            if(layersKeep.includes(f.name)){ //Don't turn off if in the layers Keep array; instead, remove it from array
+                layersKeep = layersKeep.filter(item => item !== f.name)
+            } else {
+                drawLayer(f.name);
+                var switchArray = document.getElementsByName(f.name);
+                for(var i=0;i<switchArray.length;i++){
+                    switchArray[i].checked = false;
+                }
+            }
+        });
+        layersKeep.forEach(function(f){ //Remaining layers to be kept
+            activateLayer(f);
+            var switchArray = document.getElementsByName(f);
+            for(var i=0;i<switchArray.length;i++){
+                switchArray[i].checked = true;
+            }
+        });
+
+        // populate legend table 
+        var activeFinal = toggleDatabase.filter(layer => layer.toggle == true);
+        makeLegend(activeFinal);
+    }
+
+    const popups = [...document.getElementsByClassName('popuptext')];
+    window.addEventListener('click', ({ target }) => {
+    const popup = target.closest('.infoPopup');
+    const clickedOnClosedPopup = popup && !popup.classList.contains('show');
+  
+    popups.forEach(p => p.classList.remove('show'));
+  
+    if (clickedOnClosedPopup){
+        childDiv = popup.getElementsByTagName('span')[0];
+        const infoName = childDiv.id;
+        showInfoPopup(infoName)
+    }
+
+});
+
+
+</script>

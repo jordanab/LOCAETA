@@ -1,0 +1,16 @@
+var satellitePM25 = {
+"type": "FeatureCollection",
+"displayProperties":{
+'color':'#808080',
+'weight':0,
+'fillOpacity':0.5,
+'type':'polygon',
+'iconFile':'none',
+'layerOrder':5,
+'onLoad':true,
+'legendEntry':"none"},
+"crs": { "type": "name", "properties": { "name": "this JSON is a dummy file; provides layer info and Quantity descriptor" } },
+"features": [
+{ "type": "Feature", "properties": { "Quantity": 10, "QuantityDescriptor": "Satellite PM<sub>2.5</sub> (ug/m<sup>3</sup>)" }, "geometry": { "type": "Polygon", "coordinates": [ [ [ -93.840691856270396, 33.012329099655148 ], [ -93.840691856270396, 33.002332433064772 ], [ -93.830693349126548, 33.002332433064772 ], [ -93.830693349126548, 33.012329099655148 ], [ -93.840691856270396, 33.012329099655148 ] ] ] } }
+]
+}
